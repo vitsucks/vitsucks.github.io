@@ -68,3 +68,334 @@ TCP Server with client (String reverse)
             }
         }
     }
+
+TCP CONCURRENT SERVER AND CLIENT to download a file
+    Server:- 
+
+    import java.io.DataInputStream; 
+    import java.io.DataOutputStream; 
+    import java.io.*;
+    import java.net.ServerSocket; 
+    import java.net.Socket;
+
+    public class Server {
+        private static DataOutputStream dataOutputStream = null; 
+        private static DataInputStream dataInputStream = null;
+        public static void main(String[] args) {
+            try(ServerSocket serverSocket = new ServerSocket(5000)){
+                System.out.println("listening to port:5000");
+                Socket clientSocket = serverSocket.accept(); 
+                System.out.println(clientSocket+" connected.");
+                dataInputStream = new DataInputStream(clientSocket.getInputStream()); 
+                dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+                sendFile("NewFile1.pdf");
+                dataInputStream.close(); dataOutputStream.close(); clientSocket.close();
+            } catch (Exception e){ 
+                e.printStackTrace();
+            } 
+        }
+        private static void sendFile(String path) throws Exception{
+            int bytes = 0;
+            File file = new File(path);
+            FileInputStream fileInputStream = new FileInputStream(file);
+            // send file size
+            dataOutputStream.writeLong(file.length());
+            // break file into chunks
+            byte[] buffer = new byte[4*1024];
+            while ((bytes=fileInputStream.read(buffer))!=-1){
+                dataOutputStream.write(buffer,0,bytes);
+                dataOutputStream.flush(); 
+            }
+            fileInputStream.close(); 
+        }
+    }
+
+    Client:- 
+    import java.io.*;
+    import java.net.Socket;
+
+    public class Client {
+        private static DataInputStream dataInputStream = null;
+
+        public static void main(String[] args) {
+            try (Socket socket = new Socket("172.20.58.226", 5000)) {
+                dataInputStream = new DataInputStream(socket.getInputStream());
+                receiveFile("/Users/paramkansagra/Downloads/hello.pdf");
+                dataInputStream.close();
+                dataInputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void receiveFile(String fileName) throws Exception {
+            int bytes = 0;
+            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            long size = dataInputStream.readLong(); // read file size
+            byte[] buffer = new byte[4 * 1024];
+            while (size > 0 && (bytes = dataInputStream.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                fileOutputStream.write(buffer, 0, bytes);
+                size -= bytes; // read upto file size
+            }
+            fileOutputStream.close();
+        }
+    }
+
+TCP CONCURRENT SERVER AND CLIENT (FILE UPLOAD FROM CLIENT TO SERVER)
+
+    Server Code:-
+
+    import java.io.DataInputStream;
+    import java.io.DataOutputStream;
+    import java.io.FileOutputStream;
+    import java.net.ServerSocket;
+    import java.net.Socket;
+
+    public class Server {
+        private static DataOutputStream dataOutputStream = null;
+        private static DataInputStream dataInputStream = null;
+
+        public static void main(String[] args) {
+            try (ServerSocket serverSocket = new ServerSocket(5000)) {
+                System.out.println("listening to port:5000");
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println(clientSocket + " connected.");
+                    dataInputStream = new DataInputStream(clientSocket.getInputStream());
+                    dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+                    receiveFile("NewFile1.pdf");
+                    dataInputStream.close();
+                    dataOutputStream.close();
+                    clientSocket.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void receiveFile(String fileName) throws Exception {
+            int bytes = 0;
+            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            long size = dataInputStream.readLong(); // read file size
+            byte[] buffer = new byte[4 * 1024];
+            while (size > 0 && (bytes = dataInputStream.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                fileOutputStream.write(buffer, 0, bytes);
+                size -= bytes; // read upto file size
+            }
+            fileOutputStream.close();
+        }
+    }
+
+    Client Code:-
+
+    import java.io.*;
+    import java.net.Socket;
+
+    public class Client {
+        private static DataOutputStream dataOutputStream = null;
+        private static DataInputStream dataInputStream = null;
+
+        public static void main(String[] args) {
+            try (Socket socket = new Socket("172.20.58.226", 5000)) {
+                dataInputStream = new DataInputStream(socket.getInputStream());
+                dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                sendFile("/Users/paramkansagra/Downloads/hello.pdf");
+                dataInputStream.close();
+                dataInputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void sendFile(String path) throws Exception {
+            int bytes = 0;
+            File file = new File(path);
+            FileInputStream fileInputStream = new FileInputStream(file);
+            // send file size
+            dataOutputStream.writeLong(file.length()); // break file into chunks
+            byte[] buffer = new byte[4 * 1024];
+            while ((bytes = fileInputStream.read(buffer)) != -1) {
+                dataOutputStream.write(buffer, 0, bytes);
+                dataOutputStream.flush();
+            }
+            fileInputStream.close();
+        }
+    }
+
+UDP DNS server 
+
+    Server Code:-
+
+
+
+    Client code:-
+
+    import java.io.*;
+    import java.net.*;
+
+    public class Client {
+        public static void main(String[] args) throws IOException {
+            String hostname = "raichu.com";
+            String serverIP = "127.0.0.1"; // DNS server IP address
+            int serverPort = 1362; // DNS server port
+            DatagramSocket clientSocket = new DatagramSocket();
+            InetAddress serverAddress = InetAddress.getByName(serverIP);
+            // Send DNS query
+            byte[] sendData = hostname.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+            clientSocket.send(sendPacket);
+            // Receive DNS response
+            byte[] receiveData = new byte[1021];
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            clientSocket.receive(receivePacket);
+            // Process DNS response
+            String ipAddress = new String(receivePacket.getData()).trim();
+            System.out.println("IP Address for " + hostname + ": " + ipAddress);
+            clientSocket.close();
+        }
+    }
+
+    Server code:-
+
+    import java.io.*;
+    import java.net.*;
+
+    public class Server {
+        private static int indexOf(String[] array, String str) {
+            str = str.trim();
+            for (int i = 0; i < array.length; i++) {
+                if (array[i].equals(str))
+                    return i;
+            }
+            return -1;
+        }
+
+        public static void main(String arg[]) throws IOException {
+            String[] hosts = { "zoho.com", "gmail.com", "google.com", "facebook.com" };
+            String[] ip = { "172.28.251.59", "172.217.11.5", "172.217.11.14", "31.13.71.36" };
+            System.out.println("Press Ctrl + C to Quit");
+            while (true) {
+                DatagramSocket serverSocket = new DatagramSocket(1362);
+                byte[] sendData = new byte[1021];
+                byte[] receiveData = new byte[1021];
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                String requestHost = new String(receivePacket.getData()).trim();
+                InetAddress ipAddress = receivePacket.getAddress();
+                int port = receivePacket.getPort();
+                String response;
+                System.out.println("Request for host " + requestHost);
+                int index = indexOf(hosts, requestHost);
+                if (index != -1) {
+                    response = ip[index];
+                } else {
+                    response = "Host Not Found";
+                }
+                sendData = response.getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ipAddress, port);
+                serverSocket.send(sendPacket);
+                serverSocket.close();
+            }
+        }
+    }
+
+UDP
+
+    Server Code:-
+
+    import java.net.DatagramPacket;
+    import java.net.DatagramSocket;
+    import java.net.InetAddress;
+    import java.net.SocketException;
+
+    public class udpBaseServer_2 {
+        public static void main(String[] args) throws IOException {
+            DatagramSocket ds = new DatagramSocket(1234);
+            byte[] receive = new byte[65535];
+            DatagramPacket DpReceive = null;
+            while (true) {
+                DpReceive = new DatagramPacket(receive, receive.length);
+                ds.receive(DpReceive);
+                System.out.println("Client:-" + data(receive));
+                if (data(receive).toString().equals("bye")) {
+                    System.out.println("Client sent bye.....EXITING");
+                    break;
+                }
+                receive = new byte[65535];
+            }
+        }
+
+        public static StringBuilder data(byte[] a) {
+            if (a == null)
+                return null;
+            StringBuilder ret = new StringBuilder();
+            int i = 0;
+            while (a[i] != 0) {
+                ret.append((char) a[i]);
+                i++;
+            }
+            return ret;
+        }
+    }
+
+    Client Code:-
+
+    import java.io.IOException;
+    import java.net.DatagramPacket;
+    import java.net.DatagramSocket;
+    import java.net.InetAddress;
+    import java.util.Scanner;
+
+    public class udpBaseClient_2 {
+        public static void main(String args[]) throws IOException {
+            Scanner sc = new Scanner(System.in);
+            DatagramSocket ds = new DatagramSocket();
+            InetAddress ip = InetAddress.getByName("172.20.58.226");
+            byte buf[] = null;
+            while (true) {
+                String inp = sc.nextLine();
+                buf = inp.getBytes();
+                DatagramPacket DpSend = new DatagramPacket(buf, buf.length, ip, 1234);
+                ds.send(DpSend);
+                if (inp.equals("bye"))
+                    break;
+            }
+        }
+    }
+
+Hackerrank 
+    Checksum:-
+
+    def add(a,b): 
+        carry = 0
+        n = len(a)
+        m = len(b) 
+        if(n < m):
+            n,m=m,n
+        a = '0'*(n-m) + a 
+        final = ""
+        for i in range(n-1,-1,-1):
+            last_a = int(a[i])
+            last_b = int(b[i])
+            sum = last_a + last_b + carry 
+            carry = sum//2
+            sum = sum%2
+            final = str(sum) + final
+        if(carry != 0):
+            final = add('1',final)
+        return final
+    def complement(a): 
+        ans = ""
+        for i in a:
+            if(i == '0'):
+                ans += '1' 
+            else:
+                ans += '0' 
+        return ans
+
+    n = int(input())
+    data = [input() for i in range(n)] 
+    final = add(data[0],data[1])
+    for j in range(2,n):
+        final = add(final,data[j]) 
+    print(complement(final))
