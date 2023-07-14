@@ -4,11 +4,33 @@
     <meta charset="UTF-8">
 
     <p>
-      hello
-      this
-      is
-      the
-      code
+      TCP Server WITH STRING REVERSE:-
+      import java.io.*; 
+      import java.net.*;
+      public class SimpleTCPServer {
+        public static void main(String [] args){
+          ServerSocket ss; Socket cs;
+          try{
+            ss = new ServerSocket(12345); // this is made fere by the socket to keep for connecting other clients to the server
+            cs = ss.accept(); // this is the actual socket we would be using for communicating with the other user.
+            System.out.println("Connected");
+            InputStream inputStream = cs.getInputStream();
+            DataInputStream dataInputStream = new DataInputStream(inputStream); for(int i=0;i<6;i++){
+            String message = dataInputStream.readUTF();
+            String reversedMessage = "";
+            for(int j=message.length()-1;j>=0;j--){
+              reversedMessage += message.charAt(j); 
+            }
+            System.out.println("Origial message is =>"+message); 
+            System.out.println("Reversed Message is => "+reversedMessage); 
+            System.out.println();
+          }
+          // after connecting to a pc
+        }
+        catch(Exception e){
+          System.out.println("We had a issue with starting the server Sorry"); }
+          } 
+      }
     </p>
     
     
