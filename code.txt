@@ -399,3 +399,96 @@ Hackerrank
     for j in range(2,n):
         final = add(final,data[j]) 
     print(complement(final))
+
+CHECKSUM AT RECIEVER:
+
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+string add(string first,string second){
+    int n = first.length();
+    string final = "";
+    int carry = 0;
+    
+    while(first.length() != second.length()){
+        second = "0" + second;
+    }
+    
+    for(int i = n - 1 ; i >= 0 ; i--){
+        int a = first[i]-'0';
+        int b = second[i]-'0';
+        int sum = a + b + carry;
+        carry = sum/2;
+        sum = sum%2;
+        if(sum == 0) final = "0" + final;
+        else final = "1"+final;
+    }
+    
+    if(carry != 0){
+        final = add(final , "1");
+    }
+    
+    return final;
+}
+
+string flip(string final){
+    int len=final.length();
+    string ans="";
+    for(int i=0;i<len;i++){
+        if(final[i]=='0'){
+            ans=ans+"1";
+            
+        }
+        else{
+            ans=ans+"0";
+        }
+    }
+    return ans;
+}
+
+int main() {
+    int n;
+    string arr[n];
+    cin>>n;
+   for(int i=0;i<n;i++){
+       cin>>arr[i];
+   }
+   
+   string check;
+    cin>>check;
+    
+    string final = add(arr[0],arr[1]);
+    for(int i = 2;i<n;i++){
+        final = add(final,arr[i]);
+    }
+    
+    //cout<<flip(final)<<endl;
+    if(flip(final)==check){
+        cout<<"Error free";
+    }
+    else{
+        cout<<"Error";
+    }
+    
+    
+    return 0;
+}
+
+FDMA TDMA
+btot=float(input().split()[0])
+bc=float(input().split()[0])
+bguard=float(input().split()[0])
+n=float(input().split()[0])
+slots=0
+i=0;
+while(i<btot):
+    i+=bc
+    i+=bguard
+    slots+=1
+    i=round(i,3)
+
+print(int(slots*n))
