@@ -1,0 +1,551 @@
+Greedy strategy
+
+Algorithm Greedy (a, n)  
+{  
+   Solution : = 0;  
+  for i = 0 to n do  
+  {  
+      x: = select(a);  
+     if feasible(solution, x)  
+    {  
+        Solution: = union(solution , x)  
+    }  
+       return solution;  
+  } }
+
+
+Rod cutting
+
+#include <bits/stdc++.h>
+#include <iostream>
+#include <math.h>
+using namespace std;
+
+// A utility function to get the maximum of two integers
+int max(int a, int b) { return (a > b) ? a : b; }
+
+/* Returns the best obtainable price for a rod of length n
+and price[] as prices of different pieces */
+int cutRod(int price[], int index, int n)
+{
+	// base case
+	if (index == 0) {
+		return n * price[0];
+	}
+	//At any index we have 2 options either
+	//cut the rod of this length or not cut
+	//it
+	int notCut = cutRod(price,index - 1,n);
+	int cut = INT_MIN;
+	int rod_length = index + 1;
+
+	if (rod_length <= n)
+		cut = price[index]
+			+ cutRod(price,index,n - rod_length);
+
+	return max(notCut, cut);
+}
+
+/* Driver program to test above functions */
+int main()
+{
+	int arr[] = { 1, 5, 8, 9, 10, 17, 17, 20 };
+	int size = sizeof(arr) / sizeof(arr[0]);
+	cout << "Maximum Obtainable Value is "
+		<< cutRod(arr, size - 1, size);
+	getchar();
+	return 0;
+}
+
+
+Divide and Conquer - Maximum Subarray
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// A utility function to find maximum of two integers
+int max(int a, int b) {
+	return (a > b) ? a : b;
+}
+
+// A utility function to find maximum of three integers
+int max(int a, int b, int c) {
+	return max(max(a, b), c);
+}
+
+// Find the maximum possible sum in arr[] such that arr[m]
+// is part of it
+int maxCrossingSum(int arr[], int l, int m, int h) {
+	// Include elements on left of mid.
+	int sum = 0;
+	int left_sum = INT_MIN;
+	for (int i = m; i >= l; i--) {
+		sum = sum + arr[i];
+		if (sum > left_sum)
+			left_sum = sum;
+	}
+
+	// Include elements on right of mid
+	sum = 0;
+	int right_sum = INT_MIN;
+	for (int i = m; i <= h; i++) {
+		sum = sum + arr[i];
+		if (sum > right_sum)
+			right_sum = sum;
+	}
+
+	// Return sum of elements on left and right of mid
+	// returning only left_sum + right_sum will fail for
+	// [-2, 1]
+	return max(left_sum + right_sum - arr[m], left_sum, right_sum);
+}
+
+// Returns sum of maximum sum subarray in aa[l..h]
+int maxSubArraySum(int arr[], int l, int h) {
+	// Invalid Range: low is greater than high
+	if (l > h)
+		return INT_MIN;
+	// Base Case: Only one element
+	if (l == h)
+		return arr[l];
+
+	// Find middle point
+	int m = (l + h) / 2;
+
+	/* Return maximum of following three possible cases
+			a) Maximum subarray sum in left half
+			b) Maximum subarray sum in right half
+			c) Maximum subarray sum such that the subarray
+	crosses the midpoint */
+	return max(maxSubArraySum(arr, l, m - 1),
+			maxSubArraySum(arr, m + 1, h),
+			maxCrossingSum(arr, l, m, h));
+}
+
+/*Driver program to test maxSubArraySum*/
+int main() {
+	int arr[] = { 2, 3, 4, 5, 7 };
+	int n = sizeof(arr) / sizeof(arr[0]);
+	int max_sum = maxSubArraySum(arr, 0, n - 1);
+	cout << "Maximum contiguous sum is " << max_sum;
+	return 0;
+}
+
+
+Backtracking
+
+#include <bits/stdc++.h>
+#define N 4
+using namespace std;
+
+// A utility function to print solution
+void printSolution(int board[N][N])
+{
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++)
+		if(board[i][j])
+			cout << "Q ";
+		else cout<<". ";
+		printf("\n");
+	}
+}
+
+// A utility function to check if a queen can
+// be placed on board[row][col]. Note that this
+// function is called when "col" queens are
+// already placed in columns from 0 to col -1.
+// So we need to check only left side for
+// attacking queens
+bool isSafe(int board[N][N], int row, int col)
+{
+	int i, j;
+
+	// Check this row on left side
+	for (i = 0; i < col; i++)
+		if (board[row][i])
+			return false;
+
+	// Check upper diagonal on left side
+	for (i = row, j = col; i >= 0 && j >= 0; i--, j--)
+		if (board[i][j])
+			return false;
+
+	// Check lower diagonal on left side
+	for (i = row, j = col; j >= 0 && i < N; i++, j--)
+		if (board[i][j])
+			return false;
+
+	return true;
+}
+
+// A recursive utility function to solve N
+// Queen problem
+bool solveNQUtil(int board[N][N], int col)
+{
+	// base case: If all queens are placed
+	// then return true
+	if (col >= N)
+		return true;
+
+	// Consider this column and try placing
+	// this queen in all rows one by one
+	for (int i = 0; i < N; i++) {
+		
+		// Check if the queen can be placed on
+		// board[i][col]
+		if (isSafe(board, i, col)) {
+			
+			// Place this queen in board[i][col]
+			board[i][col] = 1;
+
+			// recur to place rest of the queens
+			if (solveNQUtil(board, col + 1))
+				return true;
+
+			// If placing queen in board[i][col]
+			// doesn't lead to a solution, then
+			// remove queen from board[i][col]
+			board[i][col] = 0; // BACKTRACK
+		}
+	}
+
+	// If the queen cannot be placed in any row in
+	// this column col then return false
+	return false;
+}
+
+// This function solves the N Queen problem using
+// Backtracking. It mainly uses solveNQUtil() to
+// solve the problem. It returns false if queens
+// cannot be placed, otherwise, return true and
+// prints placement of queens in the form of 1s.
+// Please note that there may be more than one
+// solutions, this function prints one of the
+// feasible solutions.
+bool solveNQ()
+{
+	int board[N][N] = { { 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 } };
+
+	if (solveNQUtil(board, 0) == false) {
+		cout << "Solution does not exist";
+		return false;
+	}
+
+	printSolution(board);
+	return true;
+}
+
+// Driver program to test above function
+int main()
+{
+	solveNQ();
+	return 0;
+}
+
+
+All pair shortest path algorithm - Floyd
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// Number of vertices in the graph
+#define V 4
+
+/* Define Infinite as a large enough
+value.This value will be used for
+vertices not connected to each other */
+#define INF 99999
+
+// A function to print the solution matrix
+void printSolution(int dist[][V]);
+
+// Solves the all-pairs shortest path
+// problem using Floyd Warshall algorithm
+void floydWarshall(int dist[][V])
+{
+
+	int i, j, k;
+
+	/* Add all vertices one by one to
+	the set of intermediate vertices.
+	---> Before start of an iteration,
+	we have shortest distances between all
+	pairs of vertices such that the
+	shortest distances consider only the
+	vertices in set {0, 1, 2, .. k-1} as
+	intermediate vertices.
+	----> After the end of an iteration,
+	vertex no. k is added to the set of
+	intermediate vertices and the set becomes {0, 1, 2, ..
+	k} */
+	for (k = 0; k < V; k++) {
+		// Pick all vertices as source one by one
+		for (i = 0; i < V; i++) {
+			// Pick all vertices as destination for the
+			// above picked source
+			for (j = 0; j < V; j++) {
+				// If vertex k is on the shortest path from
+				// i to j, then update the value of
+				// dist[i][j]
+				if (dist[i][j] > (dist[i][k] + dist[k][j])
+					&& (dist[k][j] != INF
+						&& dist[i][k] != INF))
+					dist[i][j] = dist[i][k] + dist[k][j];
+			}
+		}
+	}
+
+	// Print the shortest distance matrix
+	printSolution(dist);
+}
+
+/* A utility function to print solution */
+void printSolution(int dist[][V])
+{
+	cout << "The following matrix shows the shortest "
+			"distances"
+			" between every pair of vertices \n";
+	for (int i = 0; i < V; i++) {
+		for (int j = 0; j < V; j++) {
+			if (dist[i][j] == INF)
+				cout << "INF"
+					<< " ";
+			else
+				cout << dist[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
+// Driver's code
+int main()
+{
+	/* Let us create the following weighted graph
+			10
+	(0)------->(3)
+		|	 /|\
+	5 |	 |
+		|	 | 1
+	\|/	 |
+	(1)------->(2)
+			3	 */
+	int graph[V][V] = { { 0, 5, INF, 10 },
+						{ INF, 0, 3, INF },
+						{ INF, INF, 0, 1 },
+						{ INF, INF, INF, 0 } };
+
+	// Function call
+	floydWarshall(graph);
+	return 0;
+}
+
+
+Network Flows - Ford Fulkersion
+
+#include <iostream>
+#include <limits.h>
+#include <queue>
+#include <string.h>
+using namespace std;
+
+// Number of vertices in given graph
+#define V 6
+
+/* Returns true if there is a path from source 's' to sink
+'t' in residual graph. Also fills parent[] to store the
+path */
+bool bfs(int rGraph[V][V], int s, int t, int parent[])
+{
+	// Create a visited array and mark all vertices as not
+	// visited
+	bool visited[V];
+	memset(visited, 0, sizeof(visited));
+
+	// Create a queue, enqueue source vertex and mark source
+	// vertex as visited
+	queue<int> q;
+	q.push(s);
+	visited[s] = true;
+	parent[s] = -1;
+
+	// Standard BFS Loop
+	while (!q.empty()) {
+		int u = q.front();
+		q.pop();
+
+		for (int v = 0; v < V; v++) {
+			if (visited[v] == false && rGraph[u][v] > 0) {
+				// If we find a connection to the sink node,
+				// then there is no point in BFS anymore We
+				// just have to set its parent and can return
+				// true
+				if (v == t) {
+					parent[v] = u;
+					return true;
+				}
+				q.push(v);
+				parent[v] = u;
+				visited[v] = true;
+			}
+		}
+	}
+
+	// We didn't reach sink in BFS starting from source, so
+	// return false
+	return false;
+}
+
+// Returns the maximum flow from s to t in the given graph
+int fordFulkerson(int graph[V][V], int s, int t)
+{
+	int u, v;
+
+	// Create a residual graph and fill the residual graph
+	// with given capacities in the original graph as
+	// residual capacities in residual graph
+	int rGraph[V]
+			[V]; // Residual graph where rGraph[i][j]
+				// indicates residual capacity of edge
+				// from i to j (if there is an edge. If
+				// rGraph[i][j] is 0, then there is not)
+	for (u = 0; u < V; u++)
+		for (v = 0; v < V; v++)
+			rGraph[u][v] = graph[u][v];
+
+	int parent[V]; // This array is filled by BFS and to
+				// store path
+
+	int max_flow = 0; // There is no flow initially
+
+	// Augment the flow while there is path from source to
+	// sink
+	while (bfs(rGraph, s, t, parent)) {
+		// Find minimum residual capacity of the edges along
+		// the path filled by BFS. Or we can say find the
+		// maximum flow through the path found.
+		int path_flow = INT_MAX;
+		for (v = t; v != s; v = parent[v]) {
+			u = parent[v];
+			path_flow = min(path_flow, rGraph[u][v]);
+		}
+
+		// update residual capacities of the edges and
+		// reverse edges along the path
+		for (v = t; v != s; v = parent[v]) {
+			u = parent[v];
+			rGraph[u][v] -= path_flow;
+			rGraph[v][u] += path_flow;
+		}
+
+		// Add path flow to overall flow
+		max_flow += path_flow;
+	}
+
+	// Return the overall flow
+	return max_flow;
+}
+
+// Driver program to test above functions
+int main()
+{
+	// Let us create a graph shown in the above example
+	int graph[V][V]
+		= { { 0, 16, 13, 0, 0, 0 }, { 0, 0, 10, 12, 0, 0 },
+			{ 0, 4, 0, 0, 14, 0 }, { 0, 0, 9, 0, 0, 20 },
+			{ 0, 0, 0, 7, 0, 4 }, { 0, 0, 0, 0, 0, 0 } };
+
+	cout << "The maximum possible flow is "
+		<< fordFulkerson(graph, 0, 5);
+
+	return 0;
+}
+
+
+Convex Hull - Jarvi March Method
+
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Point
+{
+	int x, y;
+};
+
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are collinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+int orientation(Point p, Point q, Point r)
+{
+	int val = (q.y - p.y) * (r.x - q.x) -
+			(q.x - p.x) * (r.y - q.y);
+
+	if (val == 0) return 0; // collinear
+	return (val > 0)? 1: 2; // clock or counterclock wise
+}
+
+// Prints convex hull of a set of n points.
+void convexHull(Point points[], int n)
+{
+	// There must be at least 3 points
+	if (n < 3) return;
+
+	// Initialize Result
+	vector<Point> hull;
+
+	// Find the leftmost point
+	int l = 0;
+	for (int i = 1; i < n; i++)
+		if (points[i].x < points[l].x)
+			l = i;
+
+	// Start from leftmost point, keep moving counterclockwise
+	// until reach the start point again. This loop runs O(h)
+	// times where h is number of points in result or output.
+	int p = l, q;
+	do
+	{
+		// Add current point to result
+		hull.push_back(points[p]);
+
+		// Search for a point 'q' such that orientation(p, q,
+		// x) is counterclockwise for all points 'x'. The idea
+		// is to keep track of last visited most counterclock-
+		// wise point in q. If any point 'i' is more counterclock-
+		// wise than q, then update q.
+		q = (p+1)%n;
+		for (int i = 0; i < n; i++)
+		{
+		// If i is more counterclockwise than current q, then
+		// update q
+		if (orientation(points[p], points[i], points[q]) == 2)
+			q = i;
+		}
+
+		// Now q is the most counterclockwise with respect to p
+		// Set p as q for next iteration, so that q is added to
+		// result 'hull'
+		p = q;
+
+	} while (p != l); // While we don't come to first point
+
+	// Print Result
+	for (int i = 0; i < hull.size(); i++)
+		cout << "(" << hull[i].x << ", "
+			<< hull[i].y << ")\n";
+}
+
+// Driver program to test above functions
+int main()
+{
+	Point points[] = {{0, 3}, {2, 2}, {1, 1}, {2, 1},
+					{3, 0}, {0, 0}, {3, 3}};
+	int n = sizeof(points)/sizeof(points[0]);
+	convexHull(points, n);
+	return 0;
+}
+
