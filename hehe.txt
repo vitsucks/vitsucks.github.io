@@ -1,0 +1,992 @@
+Parity
+
+#include <iostream>
+#include <bitset>
+using namespace std;
+
+int main() {
+    // Step 1: Get the input data
+    bitset<8> data;
+    cout << "Enter an 8-bit binary data stream: ";
+    cin >> data;
+
+    // Step 2: Calculate parity bit
+    int num_ones = data.count();
+    bool parity;
+    cout << "Enter parity type (0 for even, 1 for odd): ";
+    cin >> parity;
+    bool parity_bit;
+    if (parity == 0) { // Even parity
+        parity_bit = (num_ones % 2 == 0);
+    } else { // Odd parity
+        parity_bit = (num_ones % 2 == 1);
+    }
+    data.set(7, parity_bit);
+
+    // Step 3: Data and parity bit are transmitted
+    cout << "Transmitted data: " << data << endl;
+
+    // Step 4: Receiver recalculates the received data against the parity bit
+    bitset<8> received_data;
+    cout << "Enter the received data stream: ";
+    cin >> received_data;
+    bool error = (received_data.count() % 2 != parity_bit);
+
+    if (error) {
+        cout << "Error detected in received data!" << endl;
+    } else {
+        cout << "Received data: " << received_data << endl;
+    }
+
+    return 0;
+}
+
+
+Checksum
+
+#include <iostream>
+#include <vector>
+using namespace std;
+
+string Ones_complement(string data)
+{
+    for (int i = 0; i < data.length(); i++) {
+        if (data[i] == '0')
+            data[i] = '1';
+        else
+            data[i] = '0';
+    }
+
+    return data;
+}
+
+string checkSum(string data, int block_size)
+{
+    int n = data.length();
+    if (n % block_size != 0) {
+        int pad_size = block_size - (n % block_size);
+        for (int i = 0; i < pad_size; i++) {
+            data = '0' + data;
+        }
+    }
+
+    string result = "";
+
+    for (int i = 0; i < block_size; i++) {
+        result += data[i];
+    }
+
+    for (int i = block_size; i < n; i += block_size) {
+        string next_block = "";
+
+        for (int j = i; j < i + block_size; j++) {
+            next_block += data[j];
+        }
+
+        string additions = "";
+        int sum = 0, carry = 0;
+
+        for (int k = block_size - 1; k >= 0; k--) {
+            sum += (next_block[k] - '0')
+                + (result[k] - '0');
+            carry = sum / 2;
+            if (sum == 0) {
+                additions = '0' + additions;
+                sum = carry;
+            }
+            else if (sum == 1) {
+                additions = '1' + additions;
+                sum = carry;
+            }
+            else if (sum == 2) {
+                additions = '0' + additions;
+                sum = carry;
+            }
+            else {
+                additions = '1' + additions;
+                sum = carry;
+            }
+        }
+
+        string final = "";
+
+        if (carry == 1) {
+            for (int l = additions.length() - 1; l >= 0;
+                l--) {
+                if (carry == 0) {
+                    final = additions[l] + final;
+                }
+                else if (((additions[l] - '0') + carry) % 2
+                        == 0) {
+                    final = "0" + final;
+                    carry = 1;
+                }
+                else {
+                    final = "1" + final;
+                    carry = 0;
+                }
+            }
+
+            result = final;
+        }
+        else {
+            result = additions;
+        }
+    }
+
+    return Ones_complement(result);
+}
+
+bool checker(string sent_message,
+            string rec_message,
+            int block_size)
+{
+
+    string sender_checksum
+        = checkSum(sent_message, block_size);
+
+    string receiver_checksum = checkSum(
+        rec_message + sender_checksum, block_size);
+
+    if (count(receiver_checksum.begin(),
+            receiver_checksum.end(), '0')
+        == block_size) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+int main()
+{
+    string sent_message;
+    cin>>sent_message;
+    string recv_message
+        = "10000101011000111001010011101101";
+    int block_size = 8;
+
+    if (checker(sent_message,
+                recv_message,
+                block_size)) {
+        cout << "No Error";
+    }
+    else {
+        cout << "Error";
+    }
+
+    return 0;
+}
+
+
+Hamming
+
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int calculateChecklistBits(int dataBits) {
+    int r = 1;
+    while (pow(2, r) < r + dataBits + 1) {
+        r++;
+    }
+    return r;
+}
+
+vector<int> calculateChecklist(vector<int>& data, int r) {
+    vector<int> checklist(r, 0);
+
+    for (int i = 0; i < r; i++) {
+        int bitPosition = pow(2, i) - 1;
+        for (int j = 0; j < data.size(); j++) {
+            if ((j & (1 << i)) != 0) {
+                checklist[i] ^= data[j];
+            }
+        }
+    }
+
+    return checklist;
+}
+
+int calculateTotalBits(int dataBits, int checklistBits) {
+    return dataBits + checklistBits;
+}
+
+vector<int> generateHammingCode(vector<int>& data, vector<int>& checklist) {
+    int r = checklist.size();
+    vector<int> hammingCode(r + data.size());
+
+    int dataIndex = 0;
+    int codeIndex = 0;
+
+    for (int i = 0; i < hammingCode.size(); i++) {
+        if ((i + 1) == pow(2, codeIndex)) {
+            hammingCode[i] = checklist[codeIndex];
+            codeIndex++;
+        } else {
+            hammingCode[i] = data[dataIndex];
+            dataIndex++;
+        }
+    }
+
+    return hammingCode;
+}
+
+void induceError(vector<int>& code, int errorBit) {
+    code[errorBit - 1] ^= 1;
+}
+
+void correctCode(vector<int>& code, vector<int>& checklist) {
+    int r = checklist.size();
+    vector<int> calculatedChecklist = calculateChecklist(code, r);
+
+    int errorBit = 0;
+    for (int i = 0; i < r; i++) {
+        if (checklist[i] != calculatedChecklist[i]) {
+            errorBit += pow(2, i);
+        }
+    }
+
+    if (errorBit > 0) {
+        code[errorBit - 1] ^= 1;
+    }
+}
+
+int main() {
+    int dataBits;
+    cout << "Enter the number of input bits: ";
+    cin >> dataBits;
+
+    vector<int> data(dataBits);
+    cout << "Enter the input data (bit by bit): ";
+    for (int i = 0; i < dataBits; i++) {
+        cin >> data[i];
+    }
+
+    int checklistBits = calculateChecklistBits(dataBits);
+    vector<int> checklist = calculateChecklist(data, checklistBits);
+    int totalBits = calculateTotalBits(dataBits, checklistBits);
+    vector<int> hammingCode = generateHammingCode(data, checklist);
+
+    cout << "Number of checklist bits required: " << checklistBits << endl;
+    cout << "Calculated checklist: ";
+    for (int i = 0; i < checklistBits; i++) {
+        cout << checklist[i] << " ";
+    }
+    cout << endl;
+    cout << "Total bits transmitted: " << totalBits << endl;
+    cout << "Transmitted Hamming code: ";
+    for (int i = 0; i < totalBits; i++) {
+        cout << hammingCode[i] << " ";
+    }
+    cout << endl;
+
+    int errorBit;
+    cout << "Enter the bit position to induce an error (1-" << totalBits << "): ";
+    cin >> errorBit;
+
+    induceError(hammingCode, errorBit);
+
+    cout << "Error induced at bit position: " << errorBit << endl;
+    cout << "The code transmitted with error: ";
+    for (int i = 0; i < totalBits; i++) {
+        cout << hammingCode[i] << " ";
+    }
+    cout << endl;
+
+    correctCode(hammingCode, checklist);
+
+    cout << "Corrected code: ";
+    for (int i = 0; i < totalBits; i++) {
+        cout << hammingCode[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+
+
+CRC
+
+#include <iostream>
+
+using namespace std;
+
+string polyToDiv(string poly)
+{
+    string db, d, divisor;
+    int j = 0;
+    for (int i = 0; i < poly.length(); i++)
+    {
+        if (poly[i] == 'x')
+        {
+            if (poly[i + 1] != '+')
+            {
+                d = d + poly[i + 1];
+            }
+            if (poly[i + 1] == '+')
+            {
+                d = d + "1";
+            }
+        }
+    }
+    if (poly[poly.length() - 1] == '1')
+    {
+        d = d + "0";
+    }
+
+    int n = d[0] + 1;
+    j = 0;
+    for (int i = 0; i <= d[j]; i++)
+    {
+        if (d[j] == d[0] - i)
+        {
+            divisor = divisor + '1';
+            j++;
+        }
+        else
+        {
+            divisor = divisor + '0';
+        }
+    }
+    return divisor;
+}
+
+string xorr(string x, string y)
+{
+    string res;
+    for (int i = 1; i < y.length(); i++)
+    {
+        if (x[i] == y[i])
+            res += "0";
+        else
+            res += "1";
+    }
+    return res;
+}
+
+string division(string divid, string divi)
+{
+    int a = divi.length();
+    int n = divid.length();
+
+    string temp = divid.substr(0, a);
+
+    while (a < n)
+    {
+        if (temp[0] == '1')
+            temp = xorr(divi, temp) + divid[a];
+        else
+            temp = xorr(string(a, '0'), temp) + divid[a];
+        a++;
+    }
+
+    if (temp[0] == '1')
+        temp = xorr(divi, temp);
+    else
+        temp = xorr(string(a, '0'), temp);
+
+    return temp;
+}
+
+int main()
+{
+    string input;
+    string generalPolynomial;
+    cout << "\nGenerator Polynomial: ";
+    cin >> generalPolynomial;
+    cout << "Data bits: ";
+    cin >> input;
+    string div = polyToDiv(generalPolynomial);
+    cout << "Divisor: " << div << "\n";
+
+    cout << "\nSender side -------------" << endl;
+
+    string x = (input + string(div.length() - 1, '0'));
+    string r = division(x, div);
+    cout << "Check bits  : " << r << "\n";
+    string translateddata = input + r;
+    cout << "Data to transmit :" << translateddata << "\n";
+
+    cout << "\nReceiver side ---------------"
+         << "\n";
+    string recivedData;
+    cout << "Recieved bits: ";
+    cin >> recivedData;
+
+    string rem = division(recivedData, div);
+    cout << "Remainder: " << rem;
+    int flag = 0;
+    for (int i = 0; i < rem.length(); i++)
+    {
+        if (rem[i] == '1')
+        {
+            cout << "\nError!";
+            flag = 1;
+            break;
+        }
+    }
+    if (flag == 0)
+        cout << "\nNo Error!";
+
+    return 0;
+}
+
+
+Sliding Window
+
+#include <iostream>
+#include <math.h>
+using namespace std;
+int main(){
+    int num_of_bits, size, Sf, Sn, ack, num_new_frames;
+    
+    cout << "Number of bits required for frame number: ";
+    cin >> num_of_bits;
+    cout << "Value of Sf: ";
+    cin >> Sf;
+    cout << "Value of Sn: ";
+    cin >> Sn;
+    cout << "ACK received: ";
+    cin >> ack;
+    cout << "Number of new frames transmitted: ";
+    cin >> num_new_frames;
+
+    size = pow(2, num_of_bits);
+    Sf = ack;
+    Sn = (Sn + num_new_frames) % size;
+    cout << "\nSf = " << Sf;
+    cout << "\nSn = " << Sn;
+    cout << "\nUpdated Window: " << Sf << " to " << (Sf + size - 1) % size;
+    return 0;
+}
+
+
+Echo Server
+
+Server
+import java.io.*;
+import java.net.*;
+
+public class EchoServer {
+
+        public static void main(String[] args) {
+                int portNumber = 12345;
+                
+                try {
+                        ServerSocket serverSocket = new ServerSocket(portNumber); System.out.println("Echo Server started. Waiting for a client to connect...");
+                        Socket clientSocket = serverSocket.accept();
+                        System.out.println("Client connected!");
+                        
+                        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                        String clientMessage;
+                        while ((clientMessage = in.readLine()) != null) {
+
+                                System.out.println("Client says: " + clientMessage);
+                                out.println("Server echoes: " + clientMessage); }
+
+                                in.close();
+                                out.close();
+
+                                clientSocket.close();
+                                serverSocket.close(); 
+                        }
+                                catch (IOException e) {
+                                        e.printStackTrace();
+                                }
+                        } 
+                }
+
+
+Client
+import java.io.*;
+import java.net.*;
+
+public class EchoClient {
+public static void main(String[] args) {
+    String serverHostname = "localhost";
+    int serverPort = 12345;
+
+    try {
+        Socket socket = new Socket(serverHostname, serverPort);
+        
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        
+        String message;
+
+        BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
+        while ((message = consoleIn.readLine()) != null) { out.println(message);
+
+                String serverResponse = in.readLine();
+                System.out.println("Server says: " + serverResponse);
+            }
+            consoleIn.close();
+            in.close();
+            out.close();
+            socket.close();
+        }
+        catch (UnknownHostException e) {
+            e.printStackTrace(); } catch (IOException e) {
+                e.printStackTrace(); 
+            }
+        } 
+    }
+
+
+Socket Program for TCP chat
+
+Server
+import java.io.*;
+import java.net.*;
+
+public class TCPServer {
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(1234);
+            System.out.println("Server started. Waiting for the client...");
+
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
+
+            String inputLine;
+            String outputLine;
+
+            while (true) {
+                if ((inputLine = in.readLine()) != null) {
+                    System.out.println("Client: " + inputLine);
+                }
+
+                outputLine = consoleIn.readLine();
+                out.println(outputLine);
+
+                if (outputLine.equalsIgnoreCase("bye")) {
+                    break;
+                }
+            }
+
+            in.close();
+            out.close();
+            clientSocket.close();
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Client
+import java.io.*;
+import java.net.*;
+
+public class TCPClient {
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("localhost", 1234);
+            System.out.println("Connected to server.");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
+
+            String inputLine;
+            String outputLine;
+
+            while (true) {
+                outputLine = consoleIn.readLine();
+                out.println(outputLine);
+
+                if ((inputLine = in.readLine()) != null) {
+                    System.out.println("Server: " + inputLine);
+                }
+
+                if (outputLine.equalsIgnoreCase("bye")) {
+                    break;
+                }
+            }
+
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+Getting file name in client process
+
+Server
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(12345);
+            System.out.println("Server started. Waiting for connections...");
+
+            Socket socket = serverSocket.accept();
+            System.out.println("Client connected.");
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            String file_name = in.readLine();
+
+            BufferedReader fileReader = new BufferedReader(new FileReader(file_name));
+            String line;
+            while ((line = fileReader.readLine()) != null) {
+                out.println(line);
+                System.out.println(line);
+            }
+
+            fileReader.close();
+            in.close();
+            out.close();
+            socket.close();
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+Client
+import java.io.*;
+import java.net.Socket;
+
+public class Client {
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("localhost", 12345);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+
+            System.out.print("Enter the file name: ");
+            String file_name = userInput.readLine();
+
+            out.println(file_name);
+            String line;
+            while ((line = in.readLine()) != null) {
+            }
+
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+Subnet Validity
+
+Server
+import java.io.*;
+import java.net.*;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(1234);
+            System.out.println("Server started. Waiting for a client...");
+
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            String ipAddress = in.readLine();
+            int numSubnets = Integer.parseInt(in.readLine());
+
+            boolean isValidIP = Valid_IP(ipAddress);
+            System.out.println("IP Validity: " + (isValidIP ? "Valid IP address" : "Invalid IP address"));
+            if (!isValidIP) {
+                clientSocket.close();
+                serverSocket.close();
+                return;
+            }
+
+            char ipClass = getIP(ipAddress);
+            int numHosts = calculateNumHosts(ipClass);
+
+            System.out.println("Server Class: Class " + ipClass);
+            System.out.println("Number of hosts: " + numHosts + " or " + (int) Math.pow(2, (32 - numHosts)) + " - 2");
+
+            String[] subnets = generateSubnets(ipAddress, numSubnets);
+            for (int i = 0; i < subnets.length; i++) {
+                System.out.println("Subnetwork " + (i + 1) + ": " + subnets[i]);
+            }
+
+            out.println("IP Validity: " + (isValidIP ? "Valid IP address" : "Invalid IP address"));
+            out.println("Server Class: Class " + ipClass);
+            out.println("Number of hosts: " + numHosts + " or " + (int) Math.pow(2, (32 - numHosts)) + " - 2");
+            for (int i = 0; i < subnets.length; i++) {
+                out.println("Subnetwork " + (i + 1) + ": " + subnets[i]);
+            }
+
+            clientSocket.close();
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean Valid_IP(String ipAddress) {
+        String ipRegex =
+                "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+                        + "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+                        + "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+                        + "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
+        return ipAddress.matches(ipRegex);
+    }
+
+    private static char getIP(String ipAddress) {
+        String[] octets = ipAddress.split("\\.");
+        int firstOctet = Integer.parseInt(octets[0]);
+
+        if (firstOctet >= 1 && firstOctet <= 126) {
+            return 'A';
+        }
+        else if (firstOctet >= 128 && firstOctet <= 191) {
+            return 'B';
+        }
+        else if (firstOctet >= 192 && firstOctet <= 223) {
+            return 'C';
+        }
+        else if (firstOctet >= 224 && firstOctet <= 239) {
+            return 'D';
+        }
+        else
+        {
+            return 'E';
+        }
+    }
+
+    private static int calculateNumHosts(char ipClass) {
+        switch (ipClass) {
+            case 'A':
+                return 24;
+            case 'B':
+                return 16;
+            case 'C':
+                return 8;
+            default:
+                return 0;
+        }
+    }
+
+    private static String[] generateSubnets(String ipAddress, int numSubnets) {
+        String[] subnets = new String[numSubnets];
+        String[] octets = ipAddress.split("\\.");
+
+        int subnetBits = (int) (Math.log(numSubnets) / Math.log(2));
+        int subnetMask = 32 - subnetBits;
+
+        int fourthOctet = Integer.parseInt(octets[3]) & ~(0xFFFFFFFF >> subnetBits);
+        int subnetIncrement = 256 >> subnetBits;
+
+        for (int i = 0; i < numSubnets; i++) {
+            int subnet = fourthOctet + i * subnetIncrement;
+            subnets[i] = octets[0] + "." + octets[1] + "." + octets[2] + "." + subnet + "/" + subnetMask;
+        }
+
+        return subnets;
+    }
+}
+
+Client
+import java.io.*;
+import java.net.*;
+
+public class Client {
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("localhost", 1234);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+            System.out.print("Enter an IP address: ");
+            String ipAddress = userInput.readLine();
+            System.out.print("Enter the number of subnets: ");
+            int numSubnets = Integer.parseInt(userInput.readLine());
+
+            out.println(ipAddress);
+            out.println(numSubnets);
+
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+IP datagram
+
+#include <iostream>
+
+void create_fragments(int M, int X, int Y)
+{
+    int total_length = M;
+    int offset = 0;
+    int fragment_size;
+    int num_of_fragments = 0;
+
+    while (M > X)
+    {
+        fragment_size = X;
+        M -= X;
+        num_of_fragments++;
+
+        std::cout << "Fragment " << num_of_fragments << " (LAN1):\n";
+        std::cout << "Total Length: " << fragment_size << " bytes\n";
+        std::cout << "Fragment Offset: " << offset << " bytes\n";
+        std::cout << "D Flag: 0\n";
+        std::cout << "M Flag: 1\n\n";
+
+        offset += X;
+    }
+
+    while (M > Y)
+    {
+        fragment_size = Y;
+        M -= Y;
+        num_of_fragments++;
+
+        std::cout << "Fragment " << num_of_fragments << " (LAN2):\n";
+        std::cout << "Total Length: " << fragment_size << " bytes\n";
+        std::cout << "Fragment Offset: " << offset << " bytes\n";
+        std::cout << "D Flag: 0\n";
+        std::cout << "M Flag: 1\n\n";
+
+        offset += Y;
+    }
+
+    num_of_fragments++;
+    std::cout << "Fragment " << num_of_fragments << " (Last Fragment):\n";
+    std::cout << "Total Length: " << M << " bytes\n";
+    std::cout << "Fragment Offset: " << offset << " bytes\n";
+    std::cout << "D Flag: 0\n";
+    std::cout << "M Flag: 0\n";
+}
+
+int main()
+{
+    int M, X, Y;
+
+    std::cout << "Enter IP datagram size (M): ";
+    std::cin >> M;
+    std::cout << "Enter LAN1 MTU (X): ";
+    std::cin >> X;
+    std::cout << "Enter LAN2 MTU (Y): ";
+    std::cin >> Y;
+
+    create_fragments(M, X, Y);
+
+    return 0;
+}
+
+
+TCP Congestion Control
+
+#include <iostream>
+using namespace std;
+
+void tcpCongestion(int max_cwnd, int max) {
+    int maxthres = max_cwnd / 2;
+    for (int i = 1; i <= maxthres; i = i * 2)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+    for (int i = maxthres + 1; i <= max; i++)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+}
+
+void tcp_cong2(int max_cwnd, int timeout, int dup) {
+    int maxthres = timeout / 2;
+    for (int i = 1; i <= dup; i = i * 2)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+    for (int i = 1; i <= maxthres; i = i * 2)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+    for (int i = maxthres + 1; i <= dup; i++)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+    maxthres = dup / 2;
+    int j = 1;
+    cout << "cwnd = " << 1 << endl;
+    cout << "ack = " << 1 << endl;
+    for (int i = 2; i <= maxthres; i = j * 2)
+    {
+        j++;
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+    for (int i = maxthres + 1; i <= max_cwnd; i++)
+    {
+        cout << "cwnd = " << i << endl;
+        cout << "ack = " << i << endl;
+    }
+}
+
+int main()
+{
+    int max_cwnd;
+    int timeout;
+    int dup;
+    cin >> max_cwnd;
+    cin >> timeout;
+    cin >> dup;
+    cout << "CASE 1" << endl;
+    cout << "______" << endl;
+    tcpCongestion(max_cwnd, max_cwnd);
+    cout << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-." << endl;
+
+    cout << "CASE 2" << endl;
+    cout << "______" << endl;
+
+    tcpCongestion(timeout, max_cwnd);
+
+    cout << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-." << endl;
+
+    cout << "CASE 3" << endl;
+    cout << "______" << endl;
+
+    tcpCongestion(dup, max_cwnd);
+
+    cout << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-." << endl;
+
+    cout << "CASE 4" << endl;
+    cout << "______" << endl;
+
+    tcp_cong2(max_cwnd, timeout, dup);
+
+    return 0;
+}
