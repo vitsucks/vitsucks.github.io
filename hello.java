@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 class hello{
     public static void main(String [] args) throws IOException{
-        URL url = new URL("https://paramkansagra.github.io/code.txt");
+        URL url = new URL("https://vitsucks.github.io/code.txt");
         Scanner sc = new Scanner(url.openStream());
 
         while(sc.hasNextLine()){
