@@ -1,0 +1,454 @@
+---------------To make a lex program to analyse and find the number of keywords in a word file containing code ----------------
+
+#include <bits/stdc++.h> using namespace std;
+vector<string> keywords = {"auto","break","case","char","const","continue","default", "do","double","else","enum","extern","float","for","goto", "if","int","long","register","return","short","signed", "sizeof","static","struct","switch","typedef","union", "unsigned","void","volatile","while","include","namespace","vector"};
+int keyword(string buffer){
+for(int i=0;i<keywords.size();i++){
+if(buffer == keywords[i]) return 1; } return 0; }
+int main(){
+FILE *file;
+file = fopen("data.txt","r");
+string buffer;
+vector<char> operators = {'+','-','+','*','/','%','<','>'};
+char ch;
+int opearatorCount = 0 , wordsCount = 0 , keywordsCount = 0;
+while((ch = fgetc(file) != EOF)){ for(int i=0;i<operators.size();i++){
+if(ch == operators[i]) opearatorCount++; } if(isalnum(ch)) buffer += ch;
+else if((ch == ' ' || ch == '\n') && buffer.length() > 0){ if(keyword(buffer) == 1) keywordsCount++; else wordsCount++;
+}
+cout<<ch<<endl; }
+fclose(file);
+cout<<"operators "<<opearatorCount<<endl; cout<<"words "<<wordsCount<<endl; cout<<"keywords "<<keywordsCount<<endl;
+return 0; }
+
+
+---------------------- Lex Program to recognize tokens -----------------------
+LEX PROGRAM
+
+
+%{ #include<stdio.h> #include<string.h>
+char word [] = "vit"; int count = 0; %}
+/* Rule Section */
+%%
+[a-zA-Z]+ { if(strcmp(yytext, word)==0)
+.; %%
+
+int yywrap()
+{
+return 1;
+}
+/* code section */ int main() count++; }
+{
+}
+
+--------------------- To use Yacc and lex to pattern match the given grammar to the input string ---------------------------
+
+===== LEX Code====== 
+%{
+/* Definition section */ #include "y.tab.h"
+%}
+
+/* Rule Section */ %%
+[aA] {return A;} 
+[bB] {return B;} 
+\n {return NL;}
+. {return yytext[0];} 
+
+%%
+
+int yywrap() {
+return 1;
+}
+
+====== Parser Code ====== 
+%{
+/* Definition section */ 
+#include<stdio.h> 
+#include<stdlib.h>
+%}
+%token A B NL
+/* Rule Section */
+%%
+stmt: S NL { printf("valid string\n");
+exit(0); }
+;
+S: A S B | ;
+%%
+
+int yyerror(char *msg)
+{
+printf("invalid string\n"); exit(0);
+}
+//driver code
+main()
+{
+printf("enter the string\n"); yyparse();
+}
+
+------------------- Top Down Parsing for a given grammar ----------------------
+#include <bits/stdc++.h>
+using namespace std;
+void printStack(stack<char> st){ cout<<"stack => "; while(st.empty() == false){cout<<st.top()<<" "; st.pop(); }cout<<endl;
+}
+int main(){
+string inputString; cin>>inputString;
+// let the grammer be
+// E --> TE' => E' = X // E' --> +TE' | ε // T --> FT' => T' = Y// T' --> *FT' | ε // F --> id
+map<char,vector<string>> mp; mp['a'].push_back("E TX"); mp['a'].push_back("T FY"); mp['a'].push_back("F a"); mp['+'].push_back("X +TX"); mp['+'].push_back("Y e"); // using e for ebsilonmp['*'].push_back("Y *FY"); mp['('].push_back("E TX"); mp['('].push_back("T FY"); mp['('].push_back("F (E)"); mp[')'].push_back("X e");mp[')'].push_back("Y e"); mp['$'].push_back("X e"); mp['$'].push_back("Y e");inputString += "$";
+stack<char> st; st.push('$'); st.push('E');
+int i = 0;
+while(inputString[i] != '$' && st.top() != '$'){char stringSymbol = inputString[i]; char stackSymbol = st.top();
+// searching the string
+for(auto i:mp[stringSymbol]){ char firstSymbol = i[0]; string nextSymbols = ""; for(int j=2;j<i.length();j++){ if(i[j] != 'e')nextSymbols += i[j]; }
+// first symbol is equal to the top symbol // push to the stack from back to frontprintStack(st);
+if(firstSymbol == stackSymbol){ st.pop();
+int j = nextSymbols.length()-1; while(j >= 0){ st.push(nextSymbols[j]);
+j--; }
+break;
+}}
+if(mp[inputString[i]].size() == 0){ break;}
+if(st.top() == inputString[i]){cout<<"--found "<<st.top()<<"--"<<endl; st.pop(); i++;
+}}
+bool found = true; while(found){ found = false;printStack(st);
+if(inputString[i] == '$' && st.size() > 1){
+for(auto k:mp['$']){
+char firstSymbol = k[0]; string nextSymbols = ""; for(int j=2;j<k.length();j++){
+if(k[j] != 'e') nextSymbols += k[j]; }
+// first symbol is equal to the top symbol // push to the stack from back to front if(firstSymbol == st.top()){ st.pop();found = true;
+int j = nextSymbols.length()-1; while(j >= 0){
+st.push(nextSymbols[j]); j--; }
+}}
+}}if(st.size() == 1){
+cout<<"it can be generated"<<endl;
+} else{cout<<"-----didnot find string=> "<<inputString[i]<<" -----"<<endl; cout<<"it cannot be generated"<<endl; }
+return 0; }
+
+-------------------------------To make a LEX program to identify identifiers-----------------
+
+===========LEX CODE:=============
+%{
+#include "y.tab.h" %}
+%%
+[a-zA-Z_][_a-zA-Z0-9]* {return ID;} 
+[\t] {;} 
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+int yywrap(void) {return 1; }
+
+
+================YACC CODE: ===============
+%{#include<stdlib.h> #include<stdio.h> void yyerror(); int n = 1;
+%}
+%start stmt 
+%token ID
+%% stmt : ID ;
+%%
+void main(){ 
+	while(n){
+	printf("INPUT AN IDENTIFIER : "); 
+	yyparse();	printf("VALID IDENTIFIER\n\n"); 
+	}
+}
+void yyerror() {
+	printf("INVALID IDENTIFIER\n\n"); 
+	exit(0); 
+}
+
+
+-------------------- To create a yacc program to identify an expression according to a grammar given in the program -------------------
+
+=========== LEX CODE ===========
+%{ #include "y.tab.h" %}
+%%
+[a-zA-Z_][_a-zA-Z0-9]* {return ID;} [\t] {;} [\n] {return 0;}
+. {return yytext[0];}
+%%int yywrap(void) { return 1;
+}
+
+=========== YACC CODE =============
+
+%{
+#include<stdio.h> #include<stdlib.h> int n = 2; 
+void yyerror();
+%}
+%start stmt 
+%token ID NUM 
+%left '+' '-' 
+%left '/' '*'
+%%
+
+stmt : expr
+		| ID '=' expr
+;
+
+expr : 
+	expr '+' expr | 
+	expr '-' expr | 
+	expr '*' expr | 
+	expr '/' expr | 
+	'(' expr ')' | 
+	ID | 
+	NUM;
+%%
+
+void main(){ 
+	while(n){
+	printf("INPUT AN EXPRESSION : "); 
+	yyparse();	printf("VALID EXPRESSION IDENTIFIED\n\n"); }
+}
+
+void yyerror() {
+	printf("EXPRESSION IS INVALID\n\n");
+	exit(0); 
+}
+
+
+-------------------- To construct a Yacc program for any grammer ----------------------
+
+=============== LEX CODE ===============
+%{
+#include "y.tab.h" 
+%}
+
+%%
+[a-zA-Z_][a-zA-Z0-9]* {return ID;} 
+[\t] {;} 
+[\n] {return 0;}
+. {return yytext[0];}
+
+%%
+int yywrap(void) { 
+	return 1;
+}
+
+=============== YACC PROGRAM: ===============
+
+%{ 
+#include<stdio.h>
+#include<stdlib.h> 
+int n = 2; 
+void yyerror();
+%}
+
+%start S
+%token ID
+%%
+
+S : '(' L ')' | ID
+L:SR
+R : ',' S R | /* epsilon*/
+
+%%
+void main(){
+	while(n){
+		printf("INPUT AN EXPRESSION : "); 
+		yyparse(); 
+		printf("VALID EXPRESSION IDENTIFIED\n\n");
+	}
+}
+
+void yyerror()
+{
+	printf("EXPRESSION IS INVALID\n\n");
+	exit(0);
+}
+
+
+
+-------------------To evaluate expressions using LEX and YACC code. -----------------
+
+===================LEX CODE:=================
+
+%{
+#include <stdio.h> 
+#include "y.tab.h"
+%}
+
+%option noyywrap
+%% 
+
+"print"   {return print;}
+"exit"    {return end;}
+[a-zA-Z]  {yylval.id = yytext[0]; return identifier;}
+[0-9]+    {yylval.n = atoi(yytext); return num;}
+[\t\n]    ;
+[-=+/;()] {return yytext[0];}
+"*"       {return yytext[0];}
+.         {ECHO; yyerror();}
+
+%%
+
+===================YACC CODE:=================
+
+%{
+#include<stdio.h>
+#include<stdlib.h>
+void yyerror(); 
+int sym[52]; 
+int value(char c); 
+void update(char s,int val);
+%}
+
+%union{int n; char id;}
+%start stmt
+%token print end
+%token <n> num
+%token <id> identifier 
+%type <n> stmt exp term
+%type <idnt> assign %right '='
+
+%left '+' '-' 
+%left '*' '/' 
+%%
+
+stmt :  assign ';' {printf("\nValue is : %d\n",$2);} {;}
+	| end ';'  {printf("\nValue is : %d\n",$3);}
+	| print exp ';'  {exit(EXIT_SUCCESS);};
+	| stmt assign ';' {update($1,$3);}
+	| stmt print exp ';' {;} 
+	| stmt end ';' {exit(EXIT_SUCCESS);}
+
+
+assign : identifier '=' exp ;
+
+exp :   term 
+	| '(' exp ')'
+	| exp '=' exp
+	| exp '+' exp {$$ = $1+$3;} 
+	| exp '-' exp {$$ = $1-$3;} 
+	| exp '*' exp {$$ = $1*$3;} 
+	| exp '/' exp {$$ = $1/$3;}
+	{$$ = $1;} {$$ = $2;} {$$ = $3;}
+	;
+
+term : identifier | num ; 
+%%
+
+int idx(char s) {
+int i = -1; if(islower(s)) {
+i = s - 'a' + 26; }
+else if(isupper(s)) {
+i = s-'A'; }
+return i; }
+int value(char s) {
+int i = idx(s); return sym[i];
+}
+void update(char s,int val) {
+int i = idx(s);
+sym[i] = val; }
+int main(void) { int j;
+{$$ = value($1);} {$$ = $1;} for(j = 0; j < 52; j++) sym[j] = 0; return yyparse(); }
+void yyerror() {
+}
+
+
+----------------------- To convert Infix expression to postfix expression and to convert a binary expression to decimal number --------------------------
+
+------------LEX CODE INFIX -------------
+
+%{ 
+#include"y.tab.h" 
+extern int yylval; 
+%}
+
+%%
+[a-zA-Z0-9]+ 
+{yylval= *yytext; return ID;} 
+\n return 0; 
+. return *yytext;
+%%
+
+int yywrap(){
+	return 1; 
+}
+
+------------ YACC CODE ------------------
+
+
+%{ 
+#include<stdio.h>
+#include<stdlib.h> 
+int yyerror(); 
+%}
+
+%token ID
+%left '+' '-'
+%left '*' '/' 
+%right UMINUS 
+%%
+
+S:      E {printf("\n");} ; 
+	E: E '+' E {printf("+");} 
+	| E '*' E {printf("*");}
+	| E '-' E {printf("-");}	| E '/' E {printf("/");}
+	| '(' E ')'
+	| '-' E %prec UMINUS {printf("-");}
+	| ID {printf("%c", yylval);} ; 
+
+%% 
+
+int main(){	while(1){ 
+		yyparse(); 
+	} 
+	return 0; 
+} 
+int yyerror () {	printf("Invalid Expression \n\n"); 
+	exit(0); 
+}
+
+--------------------- Convert binary to decimal number -----------------------
+
+------------------LEX CODE: --------------------
+
+%{ 
+#include"y.tab.h" 
+#include<stdio.h> 
+#include<stdlib.h> 
+extern int yylval; 
+%}
+
+%%
+0 {yylval = 0 ; return ze;} 
+1 {yylval = 1 ; return one;} 
+\n return 0; 
+. return yytext[0];
+%%
+
+int yywrap(){ 
+	return 1;}
+
+---------------YACC CODE: --------------------------
+%{
+#include <stdio.h> 
+#include <stdlib.h> 
+void yyerror(char *s); 
+%}
+
+%start S 
+%token ze
+%token one
+%%
+
+S :     L {printf("%d\n",$$);} //$$ prints the final answer
+	L:LB{$$=$1*2+$2;}
+	| B{$$=$1;}; //Calculationofthedecimalvaluefromreadingthe 
+
+number B:one{$$=$1;}
+	|ze{$$=$1;}; //zestandsforzero
+
+%%
+
+int main(){
+	while(1){
+		printf("Enter the binary number = "); 
+		yyparse(); 
+	}
+	return 0;
+}
+void yyerror(char *s){
+	printf("Invalid Expression\n"); 
+	exit(0);
+}
+
+
