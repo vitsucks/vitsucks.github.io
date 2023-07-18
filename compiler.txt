@@ -1,0 +1,789 @@
+1. LEXICAL ANALYSER
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<ctype.h>
+int Keywords(char buffer[]) {
+ char keywords[32][10] = { // ALL THE KEYWORDS
+ "auto",
+ "break",
+ "case",
+ "char",
+ "const",
+ "continue",
+ "default",
+ "do",
+ "double",
+ "else",
+ "enum",
+ "extern",
+ "float",
+ "for",
+ "goto",
+ "if",
+ "int",
+ "long",
+ "register",
+ "return",
+ "short",
+ "signed",
+ "sizeof",
+ "static",
+ "struct",
+ "switch",
+ "typedef",
+ "union",
+ "unsigned",
+ "void",
+ "volatile",
+ "while"
+ };
+ int i, flag = 0;
+ for (i = 0; i < 32; ++i) {
+ if (strcmp(keywords[i], buffer) == 0) {
+ flag = 1;
+ break;
+ }
+ }
+ return flag;
+}
+int main() {
+ char ch, buffer[15], operators[] = "+-*/%=<>!&|^~?"; //OPERATORS 
+REPRESENTS THE ARITHMETIC OPERATORS
+ FILE *input, *output;
+ int i, j = 0;
+ input = fopen("lab1.txt", "r"); // FILE CREATION
+ if (input == NULL) {
+ printf("Error while opening the file\n"); //IF NO CHARACTERS IS PRESENT OR 
+FILE DOES NOT EXIST
+ exit(0);
+ }
+ output = fopen("lab1out.txt", "w"); //OUTPUT FILE CREATION
+ fprintf(output, "Token \t\tResult\n");
+ while ((ch = fgetc(input)) != EOF) {
+ for (i = 0; i < 14; ++i) {
+ if (ch == operators[i])
+ fprintf(output,"\n%c \t\tOperator\n", ch); //CHECK IF THE CHARACTER IS 
+AN OPERATOR
+ }
+ if (isalnum(ch)) { //ISALNUM CHECKS FOR EVERY CHARACTER AND EVERY 
+NUMBER
+ buffer[j++] = ch;
+ }
+ else if ((ch == ' ' || ch == '\n') && (j != 0)) {
+ buffer[j] = '\0';
+ j = 0;
+ if (Keywords(buffer) == 1)
+ fprintf(output,"\n%s \t\tKeyword\n", buffer); //CHECK FOR KEYWORD OR 
+IDENTIFIER
+ else
+ fprintf(output,"\n%s \t\tIdentifier\n", buffer);
+ }
+ }
+ printf("Lexical analysis complete. Results written to lab1out.txt.\n");
+ fclose(input);
+ fclose(output);
+ return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2. LEX PROGRAM TO IDENTIFY TOKENS
+
+%{
+#include<stdio.h>
+%}
+%%
+Bool | int | float {fprintf(yyout,"\n%s \t\tKeyword\t\n",yytext);}
+[-+=><]?[0-9]+ { fprintf(yyout,"\n%s \t\tConstant\t\n",yytext);}
+[,.';:/"]+ { fprintf(yyout,"\n%s \t\tPunctuation Chars\t\n",yytext);}
+[!@#$%^&*()]+ {fprintf(yyout,"\n%s \t\tSpecial Chars\t\n",yytext);}
+[a-zA-Z]+ {fprintf(yyout,"\n%s \t\tIdentifiers\t\n",yytext);}
+%%
+int yywrap(){
+return 1;
+}
+void main()
+{
+extern FILE *yyin, *yyout;
+yyin = fopen("lab2.txt", "r");
+yyout = fopen("lab2out.txt", "w");
+yylex();
+printf("Written in file successfully\n");
+}
+
+
+
+
+
+
+
+
+
+
+3. PATTERN MATCHING IN LEX
+
+%{
+#include<stdio.h>
+#include<string.h>
+char word [] = "hello";
+int count = 0;
+%}
+
+%%
+[a-zA-Z]+ { if(strcmp(yytext, word)==0)
+count++; }
+. ;
+%%
+int yywrap()
+{
+return 1;
+}
+int main()
+{
+extern FILE *yyin, *yyout;
+yyin=fopen("input.txt", "r");
+yylex()	;
+printf("%d\n", count);
+}
+
+
+
+
+
+
+
+
+
+
+4. TOP-DOWN PARSING
+// Grammar
+// E -> E + E | E * E | i
+// Eliminate Left Recursion:
+// E -> iE'
+// E'-> +EE'
+// E' -> *EE'
+// E' -> e (epsilon)
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#include <stdint.h>
+#include <stdlib.h>
+typedef struct
+{
+ char *val;
+ int len;
+ int loc;
+ int flag;
+} string;
+void E(string *input);
+void Edash(string *input);
+int main()
+{
+ printf("Enter the string to be processed = \n");
+ string input;
+ input.val = (char *)malloc(sizeof(char) * INT8_MAX);
+ scanf("%s", input.val);
+ input.len = strlen(input.val);
+ input.loc = 0;
+ input.flag = 0;
+ E(&input);
+ if (strlen(input.val) == input.loc && input.flag == 0)
+ printf("String is accepted!\n");
+ else
+ printf("String is rejected\n");
+}
+void E(string *input) {
+ if (input->val[input->loc] == 'i')
+ {
+ input->loc += 1;
+ if (input->loc < input->len && input->flag == 0)
+ {
+ Edash(input);
+ }
+ }
+}
+void Edash(string *input) {
+ if (input->val[input->loc] == '+')
+ {
+ input->loc += 1;
+ if (input->loc < input->len && input->flag == 0)
+
+ {
+ E(input);
+ if (input->loc < input->len && input->flag == 0){
+ Edash(input);
+ }
+ }
+ }
+ else if(input->val[input->loc] == '*')
+ {
+ input->loc += 1;
+ if (input->loc < input->len && input->flag == 0)
+ {
+ E(input);
+ if (input->loc < input->len && input->flag == 0)
+ Edash(input);
+ }
+ }
+}
+
+
+
+
+
+
+
+
+
+
+
+5. LEX AND YACC PROGRAM FOR IDENTIFIER
+
+LEX CODE
+%{
+#include "y.tab.h"
+%}
+%%
+
+[a-zA-Z_][_a-zA-Z0-9]* {return ID;}
+[\t] {;}
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+int yywrap(void)
+{
+return 1;
+}
+
+
+YACC CODE:
+%{
+#include<stdlib.h>
+#include<stdio.h>
+void yyerror();
+int n = 1;
+%}
+%start stmt
+%token ID
+%%
+stmt : ID
+;
+%%
+void main(){
+while(n){
+printf("INPUT AN IDENTIFIER : ");
+yyparse();
+printf("VALID IDENTIFIER\n\n");
+ }
+}
+void yyerror()
+{
+printf("INVALID IDENTIFIER\n\n");
+exit(0);
+}
+
+
+
+
+
+
+
+
+
+
+6. LEX AND YACC PROGRAM FOR EXPRESSION
+
+LEX CODE
+%{
+#include "y.tab.h"
+%}
+%%
+
+[a-zA-Z_][_a-zA-Z0-9]* {return ID;}
+[\t] {;}
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+int yywrap(void)
+{
+return 1;
+}
+
+
+YACC CODE:
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int n = 2;
+void yyerror();
+%}
+%start stmt
+%token ID NUM
+%left '+' '-'
+%left '/' '*'
+%%
+stmt : expr
+| ID '=' expr
+;
+expr : expr '+' expr | expr '-' expr | expr '*' expr | expr '/' expr | '(' expr ')' | ID
+| NUM;
+%%
+void main(){
+while(n){
+printf("INPUT AN EXPRESSION : ");
+yyparse();
+printf("VALID EXPRESSION IDENTIFIED\n\n");
+ }
+}
+void yyerror()
+{
+printf("EXPRESSION IS INVALID\n\n");
+exit(0);
+}
+
+
+
+
+
+
+
+
+
+7. CONSTRUCT YACC PROGRAM FOR ANY GRAMMAR
+
+LEX CODE:
+%{
+#include "y.tab.h"
+%}
+
+%%
+[a-zA-Z_][a-zA-Z0-9]* {return ID;}
+[\t] {;}
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+int yywrap(void)
+{
+return 1;
+}
+
+
+
+YACC CODE:
+The grammar is from one of the questions done in class
+S -> ( L ) | a
+L -> SL’
+L’ -> e | ,SL’
+(Here, L’ is represented as R and all the characters are accepted instead of a)
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int n = 2;
+void yyerror();
+%}
+%start S
+%token ID
+%%
+S : '(' L ')' | ID
+L : S R
+R : ',' S R | /* epsilon*/
+%%
+void main(){
+while(n){
+printf("INPUT AN EXPRESSION : ");
+yyparse();
+printf("VALID EXPRESSION IDENTIFIED\n\n");
+}
+}
+void yyerror()
+{
+printf("EXPRESSION IS INVALID\n\n");
+exit(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8. LEX AND YACC PROGRAM FOR EVALUATION 
+OF EXPRESSIONS
+
+LEX CODE:
+%{
+#include <stdio.h>
+#include "y.tab.h"
+%}
+%option noyywrap
+%%
+"print" {return print;}
+"exit" {return end;}
+[a-zA-Z] {yylval.id = yytext[0]; return identifier;}
+[0-9]+ {yylval.n = atoi(yytext); return num;}
+[\t\n] ;
+[-=+/;()] {return yytext[0];}
+"*" {return yytext[0];}
+. {ECHO; yyerror();}
+%%
+
+
+
+
+
+YACC CODE:
+%{
+#include<stdio.h>
+#include<stdlib.h>
+void yyerror();
+int sym[52];
+int value(char c);
+void update(char s,int val);
+%}
+%union{int n; char id;}
+%start stmt
+%token print end
+%token <n> num
+%token <id> identifier
+%type <n> stmt exp term
+%type <idnt> assign
+%right '='
+%left '+' '-'
+%left '*' '/'
+%%
+stmt : assign ';' {;}
+| end ';' {exit(EXIT_SUCCESS);}
+31 | P a g e
+| print exp ';' {printf("\nValue is : %d\n",$2);}
+| stmt assign ';' {;}
+| stmt print exp ';' {printf("\nValue is : %d\n",$3);}
+| stmt end ';' {exit(EXIT_SUCCESS);};
+assign : identifier '=' exp {update($1,$3);}
+;
+exp : term {$$ = $1;}
+| '(' exp ')' {$$ = $2;}
+| exp '=' exp {$$ = $3;}
+| exp '+' exp {$$ = $1+$3;}
+| exp '-' exp {$$ = $1-$3;}
+| exp '*' exp {$$ = $1*$3;}
+| exp '/' exp {$$ = $1/$3;}
+;
+term : identifier {$$ = value($1);}
+| num {$$ = $1;}
+;
+%%
+int idx(char s) {
+int i = -1;
+if(islower(s)) {
+i = s - 'a' + 26;
+}
+else if(isupper(s)) {
+i = s-'A';
+}
+return i;
+}
+int value(char s) {
+int i = idx(s);
+return sym[i];
+}
+void update(char s,int val) {
+int i = idx(s);
+sym[i] = val;
+}
+int main(void) {
+int j;
+32 | P a g e
+for(j = 0; j < 52; j++)
+sym[j] = 0;
+return yyparse();
+}
+void yyerror()
+{
+}
+
+
+
+
+
+9. YACC PROGRAMS
+
+
+CONVERT INFIX TO POSTFIX EXPRESSION.
+LEX CODE:
+%{
+#include "y.tab.h"
+%}
+%%
+[a-zA-Z_][a-zA-Z0-9]* {return ID;}
+[\t] {;}
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+int yywrap(void)
+{
+return 1;
+}
+
+
+
+
+YACC CODE:
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int yyerror();
+%}
+%token ID
+%left '+' '-'
+%left '*' '/'
+%right UMINUS
+%%
+S: E {printf("\n");} ;
+E: E '+' E {printf("+");}
+| E '*' E {printf("*");}
+| E '-' E {printf("-");}
+| E '/' E {printf("/");}
+| '(' E ')'
+| '-' E %prec UMINUS {printf("-");}
+
+| ID {printf("%c", yylval);} ;
+%%
+int main(){
+while(1){
+ yyparse(); }
+ return 0; }
+int yyerror () {
+printf("Invalid Expression \n\n");
+exit(0);
+}
+
+
+
+
+CONVERT BINARY TO DECIMAL NUMBER
+LEX CODE:
+%{
+#include"y.tab.h"
+#include<stdio.h>
+#include<stdlib.h>
+extern int yylval;
+%}
+%%
+0 {yylval = 0 ; return ze;}
+1 {yylval = 1 ; return one;} 
+\n return 0;
+. return yytext[0];
+%%
+
+int yywrap(){
+ return 1;
+}
+
+
+
+YACC CODE:
+%{
+#include <stdio.h>
+#include <stdlib.h>
+void yyerror(char *s);
+%}
+%start S
+%token ze
+%token one
+%%
+S : L {printf("%d\n",$$);} //$$ prints the final answer
+L : L B {$$ = $1 * 2 + $2;} | B { $$ = $1; } ; //Calculation of the decimal value from 
+reading the number
+B : one {$$ = $1;} | ze {$$ = $1;} ; //ze stands for zero
+%%
+int main(){
+while(1){
+printf("Enter the binary number = ");
+yyparse();
+}
+return 0;
+}
+void yyerror(char *s){
+printf("Invalid Expression\n");
+exit(0);
+}
+
+
+
+LEX CODE:
+
+%{
+#include"y.tab.h"
+%}
+
+%%
+[a-c][a-c]* {return ID;}
+[1] {return num;}
+[\t] {;}
+[\n] {return 0;}
+. {return yytext[0];}
+%%
+
+int yywrap(void){
+return 1;
+}
+
+
+
+YACC CODE:
+%{
+#include<stdio.h>
+#include<stdlib.h>
+int n=2;
+void yyerror();
+
+%}
+
+%start S
+%token ID num
+%%
+S : E '$'
+;
+E : T B 
+;
+B : '+' T B | num
+;
+T : F V
+;
+V : '*' V | num
+;
+F : '(' E ')' | ID
+;
+%%
+
+void main(){
+while(n){
+printf("Enter the input Expression = ");
+yyparse();
+printf("\nExpression valid\n");
+}
+}
+void yyerror(){
+printf("\nExpression invalid\n");
+exit(0);
+}
+
+
+
+
+
+
+
+
+FOR FOR LOOP VALIDATION
+
+
+alpha [A-Za-z]
+digit [0-9]
+
+%%
+
+[\t \n]
+for             return FOR;
+{digit}+    return NUM;
+{alpha}({alpha}|{digit})* return ID;
+"<="         return LE;
+">="         return GE;
+"=="         return EQ;
+"!="          return NE;
+"||"            return OR;
+"&&"         return AND;
+.                return yytext[0];
+
+%%
+
+
+// Yacc file: for.y
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+%}
+%token ID NUM FOR LE GE EQ NE OR AND
+%right "="
+%left OR AND
+%left '>' '<' LE GE EQ NE
+%left '+' '-'
+%left '*' '/'
+%right UMINUS
+%left '!'
+
+%%
+   
+S         : ST {printf("Input accepted\n"); exit(0);}
+ST       : FOR '(' E ';' E2 ';' E ')' DEF
+           ;
+DEF    : '{' BODY '}'
+           | E';'
+           | ST
+           |
+           ;
+BODY  : BODY BODY
+           | E ';'       
+           | ST
+           |            
+           ;
+       
+E        : ID '=' E
+          | E '+' E
+          | E '-' E
+          | E '*' E
+          | E '/' E
+          | E '<' E
+          | E '>' E
+          | E LE E
+          | E GE E
+          | E EQ E
+          | E NE E
+          | E OR E
+          | E AND E
+          | E '+' '+'
+          | E '-' '-'
+          | ID 
+          | NUM
+          ;
+
+   
+E2     : E'<'E
+         | E'>'E
+         | E LE E
+         | E GE E
+         | E EQ E
+         | E NE E
+         | E OR E
+         | E AND E
+         ;   
+%%
+
+#include "lex.yy.c"
+main() {
+    printf("Enter the expression:\n");
+    yyparse();
+}
