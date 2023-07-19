@@ -534,3 +534,75 @@ int main() {
     return 0;
 }
 
+-------------------------------------------- RABIN KARP STRING MATCHING -------------------------------------------
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+
+using namespace std;
+
+// agar prime number input me aa raha hai then take input in main function
+const int prime = 101;  // A prime number for rolling hash
+
+// Calculate the hash value of a string with a given base
+int calculateHash(const string& str, int base) {
+    int hashValue = 0;
+    int strLength = str.length();
+
+    for (int i = 0; i < strLength; i++) {
+        hashValue += str[i] * pow(base, strLength - i - 1);
+    }
+
+    return hashValue;
+}
+
+// Recalculate the rolling hash value based on the previous hash and the removed and added characters
+int recalculateHash(int oldHash, char removedChar, char addedChar, int base, int patternLength) {
+    int newHash = (oldHash - removedChar * pow(base, patternLength - 1)) * base + addedChar;
+    return newHash;
+}
+
+// Rabin-Karp string matching algorithm
+void rabinKarpSearch(const string& text, const string& pattern) {
+    int base = 256;  // Number of characters in the character set (ASCII has 256 characters)
+    int patternLength = pattern.length();
+    int textLength = text.length();
+    int patternHash = calculateHash(pattern, base);
+    int textHash = calculateHash(text.substr(0, patternLength), base);
+
+    for (int i = 0; i <= textLength - patternLength; i++) {
+        if (patternHash == textHash) {
+            // Check if the actual characters match
+            int j;
+            for (j = 0; j < patternLength; j++) {
+                if (text[i + j] != pattern[j]) {
+                    break;
+                }
+            }
+            if (j == patternLength) {
+                cout << "Pattern found at index " << i << endl;
+            }
+        }
+
+        // Calculate the rolling hash for the next window
+        if (i < textLength - patternLength) {
+            textHash = recalculateHash(textHash, text[i], text[i + patternLength], base, patternLength);
+        }
+    }
+}
+
+int main() {
+
+    string text,pattern;
+    cin>>text>>pattern;
+
+    cout << "Text: " << text << endl;
+    cout << "Pattern: " << pattern << endl;
+
+    cout << "Matching positions:" << endl;
+    rabinKarpSearch(text, pattern);
+
+    return 0;
+}
+
