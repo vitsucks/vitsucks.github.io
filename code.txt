@@ -191,3 +191,48 @@ int main(){
 }
 
 
+---------------------------------- LCS ----------------------------------
+
+#include <vector>
+#include <iostream>
+
+using namespace std;
+
+int main(){
+
+    string text,pattern;
+    cin>>text>>pattern;
+
+    int n = text.length()+1;
+    int m = pattern.length()+1;
+
+    vector<vector<int>> dp(n,vector<int>(m,0));
+
+    // dirn
+    // 0 diagonal
+    // 1 left
+    // 2 up
+
+    for(int i=1;i<n;i++){
+        for(int j=1;j<m;j++){
+
+            if(text[i-1] == pattern[j-1]){
+                dp[i][j] = dp[i-1][j-1] + 1;
+            }
+            else{
+                if(dp[i][j-1] >= dp[i-1][j]){
+                    dp[i][j] = dp[i][j-1];
+                }
+                else{
+                    dp[i][j] = dp[i-1][j];
+                }
+            }
+        }
+    }
+
+    cout<<"length of longest common sequence "<<dp[n-1][m-1]<<endl;
+
+    return 0;
+}
+
+
