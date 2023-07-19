@@ -1,494 +1,143 @@
-TCP Server with client (String reverse)
-    Server:-
+-------------------------Merge Sort--------------------------
 
-    import java.io.*; 
-    import java.net.*;
-
-    public class SimpleTCPServer {
-        public static void main(String [] args){
-        ServerSocket ss; 
-        Socket cs;
-        try{
-            ss = new ServerSocket(12345); // this is made fere by the socket to keep for connecting other clients to the server
-            
-            cs = ss.accept(); // this is the actual socket we would be using for communicating with the other user.
-            
-            System.out.println("Connected");
-            
-            InputStream inputStream = cs.getInputStream();
-            
-            DataInputStream dataInputStream = new DataInputStream(inputStream); 
-            
-            String message = dataInputStream.readUTF();
-
-            String reversedMessage = "";
-
-            for(int j=message.length()-1;j>=0;j--){
-                reversedMessage += message.charAt(j); 
-            }
-            
-            System.out.println("Origial message is =>"+message); 
-            
-            System.out.println("Reversed Message is => "+reversedMessage); 
-            
-            System.out.println();
-        }
-        // after connecting to a pc
-        }
-        catch(Exception e){
-            System.out.println("We had a issue with starting the server Sorry"); 
-        }
-    }
-
-    Client:-
-    
-    import java.net.*; 
-    import java.io.*;
-    
-    public class SimpleTCPClient{
-        public static void main(String [] args){
-            try{
-                Socket socket = new Socket("localhost", 12345); 
-                System.out.println("Connected");
-                
-                OutputStream outputStream = socket.getOutputStream();
-                
-                DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                
-                System.out.println("Sending String to the server socket");
-
-                dataOutputStream.writeUTF("DATA HERE"); 
-                dataOutputStream.flush();
-
-                socket.close();
-            }
-            catch(Exception e){ 
-                System.out.println(e.getMessage()); 
-                System.out.println("Issue with sockets");
-            }
-        }
-    }
-
-TCP CONCURRENT SERVER AND CLIENT to download a file
-    Server:- 
-
-    import java.io.DataInputStream; 
-    import java.io.DataOutputStream; 
-    import java.io.*;
-    import java.net.ServerSocket; 
-    import java.net.Socket;
-
-    public class Server {
-        private static DataOutputStream dataOutputStream = null; 
-        private static DataInputStream dataInputStream = null;
-        public static void main(String[] args) {
-            try(ServerSocket serverSocket = new ServerSocket(5000)){
-                System.out.println("listening to port:5000");
-                Socket clientSocket = serverSocket.accept(); 
-                System.out.println(clientSocket+" connected.");
-                dataInputStream = new DataInputStream(clientSocket.getInputStream()); 
-                dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
-                sendFile("NewFile1.pdf");
-                dataInputStream.close(); dataOutputStream.close(); clientSocket.close();
-            } catch (Exception e){ 
-                e.printStackTrace();
-            } 
-        }
-        private static void sendFile(String path) throws Exception{
-            int bytes = 0;
-            File file = new File(path);
-            FileInputStream fileInputStream = new FileInputStream(file);
-            // send file size
-            dataOutputStream.writeLong(file.length());
-            // break file into chunks
-            byte[] buffer = new byte[4*1024];
-            while ((bytes=fileInputStream.read(buffer))!=-1){
-                dataOutputStream.write(buffer,0,bytes);
-                dataOutputStream.flush(); 
-            }
-            fileInputStream.close(); 
-        }
-    }
-
-    Client:- 
-    import java.io.*;
-    import java.net.Socket;
-
-    public class Client {
-        private static DataInputStream dataInputStream = null;
-
-        public static void main(String[] args) {
-            try (Socket socket = new Socket("172.20.58.226", 5000)) {
-                dataInputStream = new DataInputStream(socket.getInputStream());
-                receiveFile("/Users/paramkansagra/Downloads/hello.pdf");
-                dataInputStream.close();
-                dataInputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        private static void receiveFile(String fileName) throws Exception {
-            int bytes = 0;
-            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
-            long size = dataInputStream.readLong(); // read file size
-            byte[] buffer = new byte[4 * 1024];
-            while (size > 0 && (bytes = dataInputStream.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                fileOutputStream.write(buffer, 0, bytes);
-                size -= bytes; // read upto file size
-            }
-            fileOutputStream.close();
-        }
-    }
-
-TCP CONCURRENT SERVER AND CLIENT (FILE UPLOAD FROM CLIENT TO SERVER)
-
-    Server Code:-
-
-    import java.io.DataInputStream;
-    import java.io.DataOutputStream;
-    import java.io.FileOutputStream;
-    import java.net.ServerSocket;
-    import java.net.Socket;
-
-    public class Server {
-        private static DataOutputStream dataOutputStream = null;
-        private static DataInputStream dataInputStream = null;
-
-        public static void main(String[] args) {
-            try (ServerSocket serverSocket = new ServerSocket(5000)) {
-                System.out.println("listening to port:5000");
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    System.out.println(clientSocket + " connected.");
-                    dataInputStream = new DataInputStream(clientSocket.getInputStream());
-                    dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
-                    receiveFile("NewFile1.pdf");
-                    dataInputStream.close();
-                    dataOutputStream.close();
-                    clientSocket.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        private static void receiveFile(String fileName) throws Exception {
-            int bytes = 0;
-            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
-            long size = dataInputStream.readLong(); // read file size
-            byte[] buffer = new byte[4 * 1024];
-            while (size > 0 && (bytes = dataInputStream.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                fileOutputStream.write(buffer, 0, bytes);
-                size -= bytes; // read upto file size
-            }
-            fileOutputStream.close();
-        }
-    }
-
-    Client Code:-
-
-    import java.io.*;
-    import java.net.Socket;
-
-    public class Client {
-        private static DataOutputStream dataOutputStream = null;
-        private static DataInputStream dataInputStream = null;
-
-        public static void main(String[] args) {
-            try (Socket socket = new Socket("172.20.58.226", 5000)) {
-                dataInputStream = new DataInputStream(socket.getInputStream());
-                dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                sendFile("/Users/paramkansagra/Downloads/hello.pdf");
-                dataInputStream.close();
-                dataInputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        private static void sendFile(String path) throws Exception {
-            int bytes = 0;
-            File file = new File(path);
-            FileInputStream fileInputStream = new FileInputStream(file);
-            // send file size
-            dataOutputStream.writeLong(file.length()); // break file into chunks
-            byte[] buffer = new byte[4 * 1024];
-            while ((bytes = fileInputStream.read(buffer)) != -1) {
-                dataOutputStream.write(buffer, 0, bytes);
-                dataOutputStream.flush();
-            }
-            fileInputStream.close();
-        }
-    }
-
-UDP DNS server 
-
-    Server Code:-
-
-
-
-    Client code:-
-
-    import java.io.*;
-    import java.net.*;
-
-    public class Client {
-        public static void main(String[] args) throws IOException {
-            String hostname = "raichu.com";
-            String serverIP = "127.0.0.1"; // DNS server IP address
-            int serverPort = 1362; // DNS server port
-            DatagramSocket clientSocket = new DatagramSocket();
-            InetAddress serverAddress = InetAddress.getByName(serverIP);
-            // Send DNS query
-            byte[] sendData = hostname.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
-            clientSocket.send(sendPacket);
-            // Receive DNS response
-            byte[] receiveData = new byte[1021];
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-            // Process DNS response
-            String ipAddress = new String(receivePacket.getData()).trim();
-            System.out.println("IP Address for " + hostname + ": " + ipAddress);
-            clientSocket.close();
-        }
-    }
-
-    Server code:-
-
-    import java.io.*;
-    import java.net.*;
-
-    public class Server {
-        private static int indexOf(String[] array, String str) {
-            str = str.trim();
-            for (int i = 0; i < array.length; i++) {
-                if (array[i].equals(str))
-                    return i;
-            }
-            return -1;
-        }
-
-        public static void main(String arg[]) throws IOException {
-            String[] hosts = { "zoho.com", "gmail.com", "google.com", "facebook.com" };
-            String[] ip = { "172.28.251.59", "172.217.11.5", "172.217.11.14", "31.13.71.36" };
-            System.out.println("Press Ctrl + C to Quit");
-            while (true) {
-                DatagramSocket serverSocket = new DatagramSocket(1362);
-                byte[] sendData = new byte[1021];
-                byte[] receiveData = new byte[1021];
-                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                serverSocket.receive(receivePacket);
-                String requestHost = new String(receivePacket.getData()).trim();
-                InetAddress ipAddress = receivePacket.getAddress();
-                int port = receivePacket.getPort();
-                String response;
-                System.out.println("Request for host " + requestHost);
-                int index = indexOf(hosts, requestHost);
-                if (index != -1) {
-                    response = ip[index];
-                } else {
-                    response = "Host Not Found";
-                }
-                sendData = response.getBytes();
-                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ipAddress, port);
-                serverSocket.send(sendPacket);
-                serverSocket.close();
-            }
-        }
-    }
-
-UDP
-
-    Server Code:-
-
-    import java.net.DatagramPacket;
-    import java.net.DatagramSocket;
-    import java.net.InetAddress;
-    import java.net.SocketException;
-
-    public class udpBaseServer_2 {
-        public static void main(String[] args) throws IOException {
-            DatagramSocket ds = new DatagramSocket(1234);
-            byte[] receive = new byte[65535];
-            DatagramPacket DpReceive = null;
-            while (true) {
-                DpReceive = new DatagramPacket(receive, receive.length);
-                ds.receive(DpReceive);
-                System.out.println("Client:-" + data(receive));
-                if (data(receive).toString().equals("bye")) {
-                    System.out.println("Client sent bye.....EXITING");
-                    break;
-                }
-                receive = new byte[65535];
-            }
-        }
-
-        public static StringBuilder data(byte[] a) {
-            if (a == null)
-                return null;
-            StringBuilder ret = new StringBuilder();
-            int i = 0;
-            while (a[i] != 0) {
-                ret.append((char) a[i]);
-                i++;
-            }
-            return ret;
-        }
-    }
-
-    Client Code:-
-
-    import java.io.IOException;
-    import java.net.DatagramPacket;
-    import java.net.DatagramSocket;
-    import java.net.InetAddress;
-    import java.util.Scanner;
-
-    public class udpBaseClient_2 {
-        public static void main(String args[]) throws IOException {
-            Scanner sc = new Scanner(System.in);
-            DatagramSocket ds = new DatagramSocket();
-            InetAddress ip = InetAddress.getByName("172.20.58.226");
-            byte buf[] = null;
-            while (true) {
-                String inp = sc.nextLine();
-                buf = inp.getBytes();
-                DatagramPacket DpSend = new DatagramPacket(buf, buf.length, ip, 1234);
-                ds.send(DpSend);
-                if (inp.equals("bye"))
-                    break;
-            }
-        }
-    }
-
-Hackerrank 
-    Checksum:-
-
-    def add(a,b): 
-        carry = 0
-        n = len(a)
-        m = len(b) 
-        if(n < m):
-            n,m=m,n
-        a = '0'*(n-m) + a 
-        final = ""
-        for i in range(n-1,-1,-1):
-            last_a = int(a[i])
-            last_b = int(b[i])
-            sum = last_a + last_b + carry 
-            carry = sum//2
-            sum = sum%2
-            final = str(sum) + final
-        if(carry != 0):
-            final = add('1',final)
-        return final
-    def complement(a): 
-        ans = ""
-        for i in a:
-            if(i == '0'):
-                ans += '1' 
-            else:
-                ans += '0' 
-        return ans
-
-    n = int(input())
-    data = [input() for i in range(n)] 
-    final = add(data[0],data[1])
-    for j in range(2,n):
-        final = add(final,data[j]) 
-    print(complement(final))
-
-CHECKSUM AT RECIEVER:
-
-#include <cmath>
-#include <cstdio>
-#include <vector>
 #include <iostream>
-#include <algorithm>
+#include <vector>
+
 using namespace std;
 
-string add(string first,string second){
-    int n = first.length();
-    string final = "";
-    int carry = 0;
-    
-    while(first.length() != second.length()){
-        second = "0" + second;
+void merge(vector<int>& arr,int start,int mid,int end){
+    int length1 = mid-start+1;
+    int length2 = end-mid;
+
+    vector<int> arr1(length1);
+    vector<int> arr2(length2);
+
+    int k = start;
+    for(int i=0;i<length1;i++){
+        arr1[i] = arr[k++];
     }
-    
-    for(int i = n - 1 ; i >= 0 ; i--){
-        int a = first[i]-'0';
-        int b = second[i]-'0';
-        int sum = a + b + carry;
-        carry = sum/2;
-        sum = sum%2;
-        if(sum == 0) final = "0" + final;
-        else final = "1"+final;
+    k = mid+1;
+    for(int i=0;i<length2;i++){
+        arr2[i] = arr[k++];
     }
-    
-    if(carry != 0){
-        final = add(final , "1");
+
+    int i = 0;
+    int j = 0;
+    k = start;
+
+    while(i < length1 && j < length2){
+        if(arr1[i] <= arr2[j]) arr[k++] = arr1[i++];
+        else arr[k++] = arr2[j++];
     }
-    
-    return final;
+
+    while(i < length1) arr[k++] = arr1[i++];
+
+    while(j < length2) arr[k++] = arr2[j++];
 }
 
-string flip(string final){
-    int len=final.length();
-    string ans="";
-    for(int i=0;i<len;i++){
-        if(final[i]=='0'){
-            ans=ans+"1";
-            
-        }
-        else{
-            ans=ans+"0";
-        }
-    }
-    return ans;
+void mergeSort(vector<int>& arr,int start,int end){
+    if(start >= end) return ;
+
+    int mid = start + (end-start)/2;
+    mergeSort(arr,start,mid);
+    mergeSort(arr,mid+1,end);
+
+    merge(arr,start,mid,end);
 }
 
-int main() {
+int main(){
+
     int n;
-    string arr[n];
     cin>>n;
-   for(int i=0;i<n;i++){
-       cin>>arr[i];
-   }
-   
-   string check;
-    cin>>check;
-    
-    string final = add(arr[0],arr[1]);
-    for(int i = 2;i<n;i++){
-        final = add(final,arr[i]);
+
+    vector<int> arr(n);
+    for(int i=0;i<n;i++){
+        cin>>arr[i];
     }
-    
-    //cout<<flip(final)<<endl;
-    if(flip(final)==check){
-        cout<<"Error free";
-    }
-    else{
-        cout<<"Error";
-    }
-    
-    
+
+    int start = 0;
+    int end = n-1;
+
+    mergeSort(arr,start,end);
+
+    for(int i=0;i<n;i++){
+        cout<<arr[i]<<" ";
+    }cout<<endl;
+
     return 0;
 }
 
-FDMA TDMA
-btot=float(input().split()[0])
-bc=float(input().split()[0])
-bguard=float(input().split()[0])
-n=float(input().split()[0])
-slots=0
-i=0;
-while(i<btot):
-    i+=bc
-    i+=bguard
-    slots+=1
-    i=round(i,3)
 
-print(int(slots*n))
+--------------------------MAX SUM SUBARRAY NOT CONTINIOUS-----------------------------
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void sort(vector<int>& arr){
+    int n = arr.size();
+    for(int i=0;i<n;i++){
+        for(int j=0;j<n-1;j++){
+            if(arr[j] >= arr[j+1]) swap(arr[j],arr[j+1]);
+        }
+    }
+}
+
+int main(){
+
+    int n;
+    cin>>n;
+
+    vector<int> arr(n);
+    for(int i=0;i<n;i++){
+        cin>>arr[i];
+    }
+
+    sort(arr);
+    int sum = 0;
+
+    for(int i=0;i<n;i++){
+        if(arr[i] >= 0){
+            sum += arr[i];
+        }
+    }
+
+    cout<<sum<<endl;
+
+    return 0;
+}
+
+-----------------------MAX SUB ARRAY CONTINIOUS--------------------------
+#include <iostream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+int main(){
+
+    int n;
+    cin>>n;
+
+    vector<int> arr(n);
+    for(int i=0;i<n;i++){
+        cin>>arr[i];
+    }
+
+    int maxSum = INT_MIN;
+    int currentSum = 0;
+
+    for(int i=0;i<n;i++){
+        currentSum += arr[i];
+        if(currentSum >= maxSum){
+            maxSum = currentSum;
+        }
+        if(currentSum < 0) currentSum = 0;
+    }
+
+    cout<<maxSum<<endl;
+
+    return 0;
+}
+
+-----------------------------------
