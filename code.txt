@@ -460,3 +460,77 @@ int main(){
     return 0;
 }
 
+-------------------------------------------- KMP ALGORITHM ----------------------------------
+
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+// Preprocess the pattern to calculate the longest proper prefix which is also a proper suffix for each index.
+vector<int> computeLPSArray(const string& pattern) {
+    int pattern_length = pattern.length();
+    vector<int> lps(pattern_length, 0);
+    int len = 0;  // Length of the previous longest prefix suffix
+
+    for (int i = 1; i < pattern_length; ) {
+        if (pattern[i] == pattern[len]) {
+            len++;
+            lps[i] = len;
+            i++;
+        } else {
+            if (len != 0) {
+                len = lps[len - 1];
+            } else {
+                lps[i] = 0;
+                i++;
+            }
+        }
+    }
+
+    return lps;
+}
+
+// KMP string matching algorithm
+void kmpSearch(const string& text, const string& pattern) {
+    int text_length = text.length();
+    int pattern_length = pattern.length();
+    vector<int> lps = computeLPSArray(pattern);
+
+    int i = 0;  // Index for text[]
+    int j = 0;  // Index for pattern[]
+
+    while (i < text_length) {
+        if (pattern[j] == text[i]) {
+            i++;
+            j++;
+        }
+
+        if (j == pattern_length) {
+            cout << "Pattern found at index " << i - j << endl;
+            j = lps[j - 1];
+        } else if (i < text_length && pattern[j] != text[i]) {
+            if (j != 0) {
+                j = lps[j - 1];
+            } else {
+                i++;
+            }
+        }
+    }
+}
+
+int main() {
+
+    string text,pattern;
+    cin>>text>>pattern;
+
+    cout << "Text: " << text << endl;
+    cout << "Pattern: " << pattern << endl;
+
+    cout << "Matching positions:" << endl;
+    kmpSearch(text, pattern);
+
+    return 0;
+}
+
