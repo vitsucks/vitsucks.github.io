@@ -140,4 +140,54 @@ int main(){
     return 0;
 }
 
------------------------------------
+-----------------------------------MATRIX CHAIN MULTIPLICATION--------------------------
+#include <vector>
+#include <iostream>
+#include <limits>
+
+using namespace std;
+
+int matrixChainMemoised(vector<int> arr,int i,int j,vector<vector<int>>& dp){
+    if(i == j){
+        return 0;
+    }
+
+    if(dp[i][j] != -1){
+        return dp[i][j];
+    }
+
+    dp[i][j] = INT_MAX;
+    for(int k=i;k<j;k++){
+        int ans = matrixChainMemoised(arr,i,k,dp) + matrixChainMemoised(arr,k+1,j,dp) + arr[i-1]*arr[j]*arr[k];
+        if(ans < dp[i][j]) dp[i][j] = ans;
+    }
+
+    return dp[i][j];
+}
+
+int MatrixChainMultiplication(vector<int> arr,int n,vector<vector<int>>& dp){
+    int i = 1;
+    int j = n-1;
+
+    return matrixChainMemoised(arr,i,j,dp);
+}
+
+int main(){
+
+    int n;
+    cin>>n;
+
+    vector<int> arr(n+1);
+    for(int i=0;i<=n;i++){
+        cin>>arr[i];
+    }
+
+    vector<vector<int>> dp(n+1,vector<int>(n+1,-1));
+
+    int answer = MatrixChainMultiplication(arr,n,dp);
+    cout<<answer<<endl;
+
+    return 0;
+}
+
+
