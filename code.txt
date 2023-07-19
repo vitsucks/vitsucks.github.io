@@ -373,3 +373,55 @@ int main(){
 
     return 0;
 }
+
+----------------------------------------- SUB SET SUM ------------------------------
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+bool isSubsetSumRecursive(const vector<int>& nums, int targetSum, int index, int currentSum) {
+    if (currentSum == targetSum) {
+        return true;
+    }
+
+    if (currentSum > targetSum || index >= nums.size()) {
+        return false;
+    }
+
+    // Include the current element in the subset and check
+    if (isSubsetSumRecursive(nums, targetSum, index + 1, currentSum + nums[index])) {
+        return true;
+    }
+
+    // Exclude the current element from the subset and check
+    if (isSubsetSumRecursive(nums, targetSum, index + 1, currentSum)) {
+        return true;
+    }
+
+    return false;
+}
+
+bool subsetSum(const vector<int>& nums, int targetSum) {
+    return isSubsetSumRecursive(nums, targetSum, 0, 0);
+}
+
+int main() {
+
+    int n,targetSum;
+    cin>>n>>targetSum;
+
+    vector<int> nums(n);
+    for(int i=0;i<n;i++){
+        cin>>nums[i];
+    }
+
+    if (subsetSum(nums, targetSum)) {
+        cout << "Subset with the given sum exists." << endl;
+    } else {
+        cout << "No subset with the given sum exists." << endl;
+    }
+
+    return 0;
+}
+
