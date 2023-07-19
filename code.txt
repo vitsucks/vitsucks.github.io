@@ -606,3 +606,91 @@ int main() {
     return 0;
 }
 
+--------------------------------------- BACKTRACKING TMKC --------------------------------------------------------
+#include <iostream>
+
+#include <vector>
+
+using namespace std;
+
+void backtrack(const vector<vector<int>> &dp, const string &x, const string &y, int i, int j, vector<int> &current, vector<vector<int>> &locations)
+{
+    if (j == 0)
+    {
+        // Found a subsequence, add its location to the result
+        locations.push_back(vector<int>(current.rbegin(), current.rend()));
+        return;
+    }
+
+    if (i == 0)
+    {
+        return;
+    }
+
+    if (x[i - 1] == y[j - 1])
+    {
+        // Include the current characters in both x and y
+        current.push_back(i);
+        backtrack(dp, x, y, i - 1, j - 1, current, locations);
+        current.pop_back();
+    }
+    // Exclude the current character in x
+    backtrack(dp, x, y, i - 1, j, current, locations);
+}
+
+void count_distinct_subsequences(const string &x, const string &y)
+{
+    int m = x.length();
+    int n = y.length();
+    // Initialize the dp matrix
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    // Base cases
+    for (int i = 0; i <= m; ++i)
+    {
+        dp[i][0] = 1;
+    }
+    // Fill in the dp matrix
+    for (int i = 1; i <= m; ++i)
+    {
+        for (int j = 1; j <= n; ++j)
+        {
+            if (x[i - 1] == y[j - 1])
+            {
+                dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+            }
+            else
+            {
+                dp[i][j] = dp[i - 1][j];
+            }
+        }
+    }
+
+    // Compute the number of distinct subsequences
+
+    int num_distinct = dp[m][n];
+
+    // Trace back the locations of distinct subsequences
+
+    vector<vector<int>> locations;
+    vector<int> current;
+    backtrack(dp, x, y, m, n, current, locations);
+
+    cout << num_distinct << endl;
+
+    for (const vector<int> &loc : locations)
+    {
+        for (auto it = loc.begin(); it != loc.end(); ++it)
+        {
+            cout << *it;
+        }
+        cout << endl;
+    }
+}
+
+int main()
+{
+    string x = "helllow";
+    string y = "hellow";
+    count_distinct_subsequences(x, y);
+    return 0;
+}
