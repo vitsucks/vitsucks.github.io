@@ -184,7 +184,7 @@ int main(){
 
     vector<vector<int>> dp(n+1,vector<int>(n+1,-1));
 
-    int answer = MatrixChainMultiplication(arr,n,dp);
+    int answer = MatrixChainMultiplication(arr,n+1,dp);
     cout<<answer<<endl;
 
     return 0;
