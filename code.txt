@@ -236,3 +236,56 @@ int main(){
 }
 
 
+--------------------------------------------------------- 0/1 KNAPSACK ----------------------------------------
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class article{
+    public:
+        int price,weight;
+        float pricePerWeight;
+
+        void set(int price,int weight){
+            this->price = price;
+            this->weight = weight;
+
+            pricePerWeight = (float)(price/weight);
+        }
+};
+
+bool great(article a1,article a2){
+    if(a1.pricePerWeight >= a2.pricePerWeight) return true;
+    return false;
+}
+
+int main(){
+
+    int n,weightCarry;
+    cin>>n>>weightCarry;
+
+    vector<article> arr(n);
+    for(int i=0;i<n;i++){
+        int price,weight;
+        cin>>price>>weight;
+
+        arr[i].set(price,weight);
+    }
+
+    sort(arr.begin(),arr.end(),great);
+
+    int price = 0;
+    int weight = 0;
+    for(auto i:arr){
+        if(weight + i.weight >= weightCarry){
+            weight += i.weight;
+            price += i.price;
+        }
+    }
+
+    cout<<price<<endl;
+
+    return 0;
+}
