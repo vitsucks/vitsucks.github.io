@@ -1,0 +1,194 @@
+----------------------- MAJORITY ELEMENT --------------------------
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+
+public class majorityElement {
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        Map<Integer,Integer> mp = new HashMap<>();
+
+        for(int i=0;i<n;i++){
+            int value = sc.nextInt();
+            if(mp.containsKey(value)){
+                mp.put(value, mp.get(value)+1);
+            }
+            else{
+                mp.put(value, 1);
+            }
+        }
+
+        int maxElement = -1;
+        int maxCount = -1;
+
+        for(Map.Entry<Integer,Integer> entry : mp.entrySet()){
+            if(entry.getValue() > maxCount){
+                maxCount = entry.getValue();
+                maxElement = entry.getKey();
+            }
+        }
+
+        System.out.format("%d %d\n",maxElement,maxCount);
+
+        sc.close();
+    }
+}
+
+----------------------- MAX EQUILIBERIUM SUM --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class maxEquiliberiumSum {
+
+    public static int max(int a,int b){
+        if(a > b) return a;
+        return b;
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int ans = 0;
+
+        ArrayList<Integer> arr = new ArrayList<>();
+        for(int i=0;i<n;i++) arr.add(sc.nextInt());
+
+        ArrayList<Integer> prefixSum = new ArrayList<>();
+        ArrayList<Integer> suffixSum = new ArrayList<>();
+
+        prefixSum.add(arr.get(0));
+
+        for(int i=1;i<n;i++){
+            prefixSum.add(prefixSum.get(i-1)+arr.get(i));
+        }
+
+        suffixSum.add(arr.get(n-1));
+
+        if(suffixSum.get(0) == arr.get(n-1)){
+            ans = max(ans,prefixSum.get(n-1));
+        }
+
+        for(int i=n-2;i>=0;i--){
+            suffixSum.add(0, suffixSum.get(0)+arr.get(i));
+
+            if(suffixSum.get(0) == prefixSum.get(i)){
+                ans = max(ans,prefixSum.get(i));
+            }
+        }
+
+        System.out.println(ans);
+
+        sc.close();
+    }
+}
+
+----------------------- MAX PRODUCT SUB ARRAY --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class maximumProductSubArray {
+    
+    public static int min(int a,int b){
+        if(a < b) return a;
+        return b;
+    }
+
+    public static int max(int a,int b){
+        if(a > b) return a;
+        return b;
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        ArrayList<Integer> arr = new ArrayList<>();
+
+        for(int i=0;i<n;i++){
+            arr.add(sc.nextInt());
+        }
+
+        int maxEndingHere = 1;
+        int minEndingHere = 1;
+        int maxSoFar = 0;
+
+        Boolean flag = false;
+
+        for(int i=0;i<n;i++){
+            int element = arr.get(i);
+            if(element > 0){
+                maxEndingHere = maxEndingHere * element;
+                minEndingHere = min(minEndingHere*element,1);
+                flag = true;
+            }
+            else if(element == 0){
+                maxEndingHere = 1;
+                minEndingHere = 1;
+            }
+            else{
+                int temp = maxEndingHere;
+                maxEndingHere = max(maxEndingHere*element,1);
+                minEndingHere = temp*element;
+            }
+
+            if(maxEndingHere > maxSoFar){
+                maxSoFar = maxEndingHere;
+            }
+        }
+
+        if(!flag && maxSoFar == 0){
+            System.out.println(0);
+        }
+        else{
+            System.out.println(maxSoFar);
+        }
+
+        sc.close();
+    }
+}
+
+----------------------- MAX SUM OF HOURGLASS --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class maximumSumOfHourGlass {
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        ArrayList<ArrayList<Integer>> matrix = new ArrayList<ArrayList<Integer>>();
+
+        int n = sc.nextInt();
+        int m = sc.nextInt();
+
+        for(int i=0;i<n;i++){
+            ArrayList<Integer> tempArrayList = new ArrayList<>();
+            for(int j=0;j<m;j++){
+                tempArrayList.add(sc.nextInt());
+            }
+            matrix.add(tempArrayList);
+        }
+
+        int max = 0;
+
+        for(int i=0;i<n-3;i++){
+            for(int j=0;j<m-3;j++){
+                int sum = matrix.get(i).get(j) + matrix.get(i).get(j+1) + matrix.get(i).get(j+2);
+                sum += matrix.get(i+1).get(j+1);
+                sum += matrix.get(i+2).get(j) + matrix.get(i+2).get(j+1) + matrix.get(i+2).get(j+2);
+
+                if(max < sum) max = sum;
+            }
+        }
+
+        System.out.format("MAX SUM IS %d \n",max);
+
+        sc.close();
+    }
+}

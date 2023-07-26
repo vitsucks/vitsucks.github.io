@@ -1,0 +1,153 @@
+----------------------- BINARY PALINDROME --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class binaryPalindrome {
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+
+        ArrayList<Integer> binary = new ArrayList<>();
+
+        while(n != 0){
+            int last = n%2;
+            n = n/2;
+
+            binary.add(last);
+        }
+
+        int i = 0;
+        int j = binary.size()-1;
+
+        boolean isBinary = true;
+        while(i < j){
+            if(binary.get(i) == binary.get(j)){
+                i++;
+                j--;
+            }
+            else{
+                isBinary = false;
+                break;
+            }
+        }
+
+        if(isBinary){
+            System.out.println("It is a binary palindrome");
+        }
+        else{
+            System.out.println("It is not a binary palindrome");
+        }
+
+        sc.close();
+    }
+}
+
+----------------------- BLOCK SWAP --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class blockSwap {
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int k = sc.nextInt();
+        ArrayList<Integer> arr = new ArrayList<>();
+        for(int i=0;i<n;i++){
+            int temp = sc.nextInt();
+            arr.add(temp);
+        }
+
+        for(int i=0;i<k;i++){
+            arr.insert(0,arr.get(n-1));
+        }
+
+        for(int i=0;i<n;i++){
+            System.out.format("%d ",arr.get(i));
+        }
+
+        sc.close();
+    }
+}
+
+----------------------- Chinese Remainder Thm --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class chineseRemainderThm {
+
+    public static void findAnswer(ArrayList<Integer> number,ArrayList<Integer> remainder,int n){
+        int x = 1;
+
+        while(true){
+            int j = 0;
+            for(;j<n;j++){
+                if(x%number.get(j) != remainder.get(j)){
+                    break;
+                }
+            }
+
+            if(j == n) break;
+            x++;
+        }
+
+        System.out.println("Answer is "+x);
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        ArrayList<Integer> number = new ArrayList<>();
+        ArrayList<Integer> remainder = new ArrayList<>();
+
+        for(int i=0;i<n;i++){
+            int temp = sc.nextInt();
+            number.add(temp);
+        }
+
+        for(int i=0;i<n;i++){
+            int temp = sc.nextInt();
+            remainder.add(temp);
+        }
+
+        findAnswer(number,remainder,n);
+
+        sc.close();
+    }
+}
+
+----------------------- EULERS PHI --------------------------
+
+import java.util.Scanner;
+
+public class eulersPhiFunction {
+
+    public static int gcd(int a,int b){
+        if(a == 0) return b;
+        if(b == 0) return a;
+
+        return gcd(b%a,a);
+    }
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int max = 0;
+
+        for(int i=1;i<=n;i++){ 
+            int check = gcd(i,n);
+            if(check == 1){
+                max++;
+            }
+        }
+
+        System.out.println(max);
+
+        sc.close();
+    }
+}
