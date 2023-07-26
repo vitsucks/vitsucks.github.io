@@ -1,0 +1,252 @@
+----------------------- MERGE SORT --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class mergeSort {
+
+    public static void merge(ArrayList<Integer> arr,int start,int mid,int end){
+        int length1 = mid - start + 1;
+        int length2 =  end - mid;
+
+        ArrayList<Integer> arr1 = new ArrayList<>();
+        ArrayList<Integer> arr2 = new ArrayList<>();
+
+        int k = start;
+        for(int i=0;i<length1;i++){
+            arr1.add(arr.get(k++));
+        }
+
+        k = mid+1;
+        for(int i=0;i<length2;i++){
+            arr2.add(arr.get(k++));
+        }
+
+        k = start;
+        int i=0;
+        int j = 0;
+
+        while(i < length1 && j < length2){
+            if(arr1.get(i) <= arr2.get(j)){
+                arr.set(k++,arr1.get(i++));
+            }
+            else{
+                arr.set(k++,arr2.get(j++));
+            }
+        }
+
+        while(i < length1){
+            arr.set(k++,arr1.get(i++));
+        }
+        while(j < length2){
+            arr.set(k++,arr2.get(j++));
+        }
+    }
+
+    public void sort(ArrayList<Integer> arr,int start,int end){
+        if(start >= end) return ;
+
+        int mid = start + (end-start)/2;
+        sort(arr,start,mid);
+        sort(arr,mid+1,end);
+
+        merge(arr,start,mid,end);
+    }
+
+    public void printArray(ArrayList<Integer> arr){
+        int n = arr.size();
+        for(int i=0;i<n;i++){
+            System.out.format("%d ",arr.get(i));
+        }
+        System.out.println();
+    }
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        ArrayList<Integer> arr = new ArrayList<>();
+        for(int i=0;i<n;i++){
+            arr.add(sc.nextInt());
+        }
+
+        mergeSort obj = new mergeSort();
+        obj.sort(arr, 0, n-1);
+        obj.printArray(arr);
+
+        sc.close();
+    }
+}
+
+----------------------- INSERTION SORT --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class selectionSort {
+    public void sort(ArrayList<Integer> arr){
+        int n = arr.size();
+        for(int i=0;i<n;i++){
+            int element = arr.get(i);
+            int index = i;
+
+            for(int j=i;j<n;j++){
+                if(arr.get(j) < element){
+                    element = arr.get(j);
+                    index = j;
+                }
+            }
+            
+            int temp = arr.get(i);
+            arr.set(i, element);
+            arr.set(index,temp);
+        }
+    }
+
+    public void print(ArrayList<Integer> arr){
+        int n = arr.size();
+        for(int i=0;i<n;i++){
+            System.out.format("%d ",arr.get(i));
+        }
+        System.out.println();
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        ArrayList<Integer> arr = new ArrayList<>();
+
+        for(int i=0;i<n;i++) arr.add(sc.nextInt());
+
+        selectionSort obj = new selectionSort();
+        obj.sort(arr);
+        obj.print(arr);
+
+        sc.close();
+    }
+}
+
+----------------------- STROBOGRAMMATIC NUMBER --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class strobogrammaticNumber{
+
+    public static boolean isNumber(int n){
+        int temp = n;
+        ArrayList<Integer> arr = new ArrayList<Integer>();
+
+        while(temp != 0){
+            int lastDigit = temp%10;
+            temp = temp/10;
+
+            arr.add(lastDigit);
+        }
+
+        int newNumber = 0;
+
+        for(int i=0;i<arr.size();i++){
+            int number = arr.get(i);
+            if(number == 1 || number == 6 || number == 8 || number == 9 || number == 0 || (i == arr.size()/2 && arr.size()%2 == 1)){
+                newNumber = newNumber*10;
+                if(arr.size()/2 == i){
+                    newNumber += number;
+                }
+                else{
+                    if(number == 1) newNumber += number;
+                    if(number == 6) newNumber += 9;
+                    if(number == 8) newNumber += 8;
+                    if(number == 9) newNumber += 6;
+                    if(number == 0) newNumber += 0;
+                }
+            }
+            else{
+                return false;
+            }
+        }
+
+        if(newNumber == n) return true;
+        return false;
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+
+        if(isNumber(n)){
+            System.out.println("YES");
+        }
+        else{
+            System.out.println("NO");
+        }
+
+        sc.close();
+    }
+}
+
+----------------------- SWAP NIBBLES --------------------------
+
+import java.util.Scanner;
+
+public class swapNibblesOfAByte {
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int left = n>>4;
+        int right = n & 240;
+        right = right << 4;
+
+        int answer = right | left;
+        System.out.println(answer);
+
+        sc.close();
+    }
+}
+
+----------------------- TOGGLE SWITCH --------------------------
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class toggleSwitch {
+
+    public static void findAnswer(int n,int switchNumber){
+        ArrayList<Boolean> switches = new ArrayList<>();
+        for(int i=0;i<=n;i++){
+            switches.add(false);
+        }
+        switches.set(0,true);
+        for(int i=1;i<=n;i++){
+            for(int j=i;j<=n;j+=i){
+                if(switches.get(j)){
+                    switches.set(j,false);
+                }
+                else{
+                    switches.set(j,true);
+                }
+            }
+        }
+
+        if(switches.get(switchNumber)){
+            System.out.println("The switch is on");
+        }
+        else{
+            System.out.println("The switch is off");
+        }
+    }
+
+    public static void main(String [] args){
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int switchNumber = sc.nextInt();
+    
+        findAnswer(n,switchNumber);
+
+        sc.close();
+    }
+}
+
